@@ -3,7 +3,6 @@ import json
 import requests
 
 def load_telegram_keys():
-    """Loads Telegram credentials from the parent directory."""
     key_path = os.path.abspath(os.path.join(os.getcwd(), '..', 'telegram_keys.json'))
     try:
         with open(key_path, "r") as file:
@@ -12,8 +11,8 @@ def load_telegram_keys():
         print(f"Error: telegram_keys.json not found at {key_path}")
         return None
 
-def send_telegram_alert(symbol, report):
-    """Formats the AI report and pushes it to Telegram."""
+def send_telegram_alert(symbol, report, image_buffer=None):
+    """Formats the AI report and pushes it with an optional image to Telegram."""
     keys = load_telegram_keys()
     if not keys:
         return
@@ -21,16 +20,8 @@ def send_telegram_alert(symbol, report):
     bot_token = keys.get("bot_token")
     chat_id = keys.get("chat_id")
     
-    # 1. Format the JSON into a clean, readable alert message
     action = report.get("Action", "HOLD").upper()
-    
-    # Use emojis to make the alert scannable on mobile
-    if action == "BUY":
-        icon = "🟢"
-    elif action == "SELL":
-        icon = "🔴"
-    else:
-        icon = "⚪"
+    icon = "🟢" if action == "BUY" else "🔴" if action == "SELL" else "⚪"
         
     pos_mgmt = report.get("Position_Management", {})
         
@@ -44,18 +35,23 @@ def send_telegram_alert(symbol, report):
         f"💡 **Rationale:** {pos_mgmt.get('Rationale', 'N/A')}"
     )
 
-    # 2. Push to the Telegram API
-    url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
-    payload = {
-        "chat_id": chat_id,
-        "text": message,
-        "parse_mode": "Markdown"
-    }
+    # Push to Telegram API
+    if image_buffer:
+        url = f"https://api.telegram.org/bot{bot_token}/sendPhoto"
+        # Reset the buffer pointer to the beginning before reading
+        image_buffer.seek(0)
+        files = {"photo": ("chart.png", image_buffer, "image/png")}
+        data = {"chat_id": chat_id, "caption": message, "parse_mode": "Markdown"}
+        response = requests.post(url, data=data, files=files)
+    else:
+        # Fallback if no image is provided
+        url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+        payload = {"chat_id": chat_id, "text": message, "parse_mode": "Markdown"}
+        response = requests.post(url, json=payload)
     
     try:
-        response = requests.post(url, json=payload)
         if response.status_code == 200:
-            print("🚀 Successfully pushed alert to Telegram!")
+            print("🚀 Successfully pushed alert AND chart to Telegram!")
         else:
             print(f"Failed to send Telegram alert: {response.text}")
     except Exception as e:

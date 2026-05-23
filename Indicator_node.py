@@ -5,6 +5,9 @@ import matplotlib.pyplot as plt
 from google.genai import types
 from API_client import client 
 
+from Tele_bot import send_telegram_alert
+
+
 def run_indicator_agent(state: dict) -> dict:
     """
     LangGraph Node: Reads technical data from state, queries Gemini, and writes the JSON report back to state.
@@ -200,3 +203,16 @@ if __name__ == "__main__":
             vis_indicators=visualise_indicators, 
             vis_price_points=visualise_price_points
         )
+
+    # 4. Run the agent and updates to the telegram bot
+    result = run_indicator_agent(test_state)
+    report = result.get("indicator_report")
+    
+    print("\n=== AI REPORT ===")
+    print(json.dumps(report, indent=4))
+    
+    # NEW: Push the alert to your phone
+    if report:
+        print("\nPushing alert to Telegram...")
+        send_telegram_alert(test_symbol, report)
+    

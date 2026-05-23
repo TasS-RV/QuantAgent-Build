@@ -1,5 +1,8 @@
 import yfinance as yf #Library used for polling live data 
 import matplotlib.pyplot as plt
+import os, sys
+import google.genai as genai
+from google.genai import types
 
 # Define Phase 1 Asset & Time Horizon Logic
 symbol = "AAPL"
@@ -24,6 +27,7 @@ def sample_plotter(df):
         # Formatting the graph
         plt.title(f"{symbol} Daily Closing Price (Phase 1 MVP Test)", fontsize=14)
         plt.xlabel("Date", fontsize=12)
+
         plt.ylabel("Price (USD)", fontsize=12)
         plt.grid(True, linestyle='--', alpha=0.7)
         plt.legend()
@@ -81,5 +85,23 @@ def fib_retracement(df):
         plt.grid(True, linestyle='--', alpha=0.3)
         plt.legend(loc='upper left', fontsize=9)
         plt.show()
+# 2, Implementation of Fibonacci Retracement and EMA plotting
+# fib_retracement(df)
 
-fib_retracement(df)
+# 3. API key initialisation
+
+key_path = os.path.abspath(os.path.join(os.getcwd(), '..', 'Gemini_API.txt'))
+
+try:
+    with open(key_path, "r") as file:
+        API_KEY = file.read().strip()
+    
+    # Initialize the new SDK Client
+    client = genai.Client(api_key=API_KEY)
+    print(f"Successfully authenticated. Loaded key from: {key_path}")
+except FileNotFoundError:
+    print(f"Error: api_key.txt not found at {key_path}.")
+    print("Please ensure the file is saved exactly one folder above this repository.")
+    exit()
+
+

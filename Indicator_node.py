@@ -4,6 +4,7 @@ import yfinance as yf
 import matplotlib.pyplot as plt
 from google.genai import types
 from API_client import client 
+import io
 
 from Tele_bot import send_telegram_alert
 
@@ -73,7 +74,7 @@ def extract_price(text_value):
     match = re.search(r'\d+\.?\d*', str(text_value))
     return float(match.group()) if match else None
 
-def plot_algoedge_chart(df, symbol, fib_levels, report, vis_indicators=True, vis_price_points=True):
+def plot_algoedge_chart(df, symbol, fib_levels, report, vis_indicators=True, vis_price_points=True, return_buffer = True, save_local = False):
     """Generates the visual validation chart."""
     close_price = df['Close'].squeeze()
     
@@ -119,9 +120,31 @@ def plot_algoedge_chart(df, symbol, fib_levels, report, vis_indicators=True, vis
     # Position legend outside the plot to avoid clutter
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=9)
     plt.tight_layout()
-    plt.show()
 
-# --- Execution & Testing Block ---
+
+    # Either return the image memory buffer, or save the plot locally on the computer: this subsection implements the chart plotting for the telegram bot
+    if save_local:
+        filename = f"{symbol}_AlgoEdge_Analysis.png"
+        plt.savefig(filename, format='png', bbox_inches='tight')
+        print(f"📊 Chart saved locally to your folder as: {filename}")
+    
+    # Existing logic for Telegram Buffer or screen display
+    if return_buffer:
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png', bbox_inches='tight')
+        plt.close() 
+        return buf
+    else:
+        # If we aren't sending to Telegram, we still want to close the plot 
+        # so it doesn't pause the script, UNLESS we specifically want it on screen.
+        if save_local:
+            plt.close()
+            return None
+        else:
+            plt.show() # Pops up on your screen
+            return None
+
+# Self code execution block 
 
 if __name__ == "__main__":
     # 1. Configuration 
@@ -132,6 +155,10 @@ if __name__ == "__main__":
     
     visualise_indicators = True
     visualise_price_points = True
+
+    return_buffer_state = True # Set to False if it should not be sent to telegram
+    send_to_tele = True # Self-explanatory - must set to true if we also want the graph to be sent to tele
+
 
     print(f"Fetching {test_duration} of live data for {test_symbol}...")
     
@@ -186,33 +213,29 @@ if __name__ == "__main__":
         "messages": []
     }
     
-    # 4. Run the Agent
-    result = run_indicator_agent(test_state)
-    
-    print("\n=== AI REPORT ===")
-    print(json.dumps(result["indicator_report"], indent=4))
-    
-    # 5. Trigger Visualisation
-    if visualise_indicators or visualise_price_points:
-        print("\nGenerating graph...")
-        plot_algoedge_chart(
-            df=df_raw, 
-            symbol=test_symbol, 
-            fib_levels=fib_levels, 
-            report=result.get("indicator_report"), 
-            vis_indicators=visualise_indicators, 
-            vis_price_points=visualise_price_points
-        )
-
-    # 4. Run the agent and updates to the telegram bot
+    # 4. Run the Agent - based on the price action and current data
     result = run_indicator_agent(test_state)
     report = result.get("indicator_report")
     
     print("\n=== AI REPORT ===")
     print(json.dumps(report, indent=4))
     
-    # NEW: Push the alert to your phone
+    # 5. Generate Visualisation (To Memory)
+    chart_buffer = None
+    if visualise_indicators or visualise_price_points:
+        print("\nGenerating graph for Telegram...")
+        chart_buffer = plot_algoedge_chart(
+            df=df_raw, 
+            symbol=test_symbol, 
+            fib_levels=fib_levels, 
+            report=report, 
+            vis_indicators=visualise_indicators, 
+            vis_price_points=visualise_price_points,
+            return_buffer = return_buffer_state, # Set to false if it should not be sent ot telegram
+            save_local = send_to_tele
+        )
+        
+    # 6. Push the alert via the telegram bot
     if report:
-        print("\nPushing alert to Telegram...")
-        send_telegram_alert(test_symbol, report)
-    
+        print("Pushing alert to Telegram...")
+        send_telegram_alert(test_symbol, report, image_buffer=chart_buffer)

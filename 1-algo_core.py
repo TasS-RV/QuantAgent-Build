@@ -105,3 +105,32 @@ except FileNotFoundError:
     exit()
 
 
+
+# Assuming you saved the above code in technical_utils.py
+from 2-Tech-Utilities import add_ema_indicators, calculate_fibonacci_levels, format_recent_data_payload
+
+# 1. Configuration
+symbol = "AAPL"
+timeframe = "1d"
+user_entry_price = 225.50 # Can adjust this as necessary - will store running user data about their average price
+
+# 2. Fetch Data
+df_raw = yf.download(symbol, period="3mo", interval=timeframe, progress=False)
+
+# 3. Apply Technical Indicators via Functions
+df_processed = add_ema_indicators(df_raw, spans=(9, 14))
+fib_levels = calculate_fibonacci_levels(df_processed['Close'])
+clean_recent_data = format_recent_data_payload(df_processed, days=5)
+
+# 4. Construct the Final LLM Payload
+analysis_payload = {
+    "Asset": symbol,
+    "Timeframe": timeframe,
+    "Current_Price": float(df_processed['Close'].iloc[-1]),
+    "User_Position_Price": user_entry_price,
+    "Recent_Action_Last_5_Days": clean_recent_data,
+    "Fibonacci_Levels": fib_levels
+}
+
+# (Proceed to pass `analysis_payload` to the Gemini Client as before...)
+

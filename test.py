@@ -9,60 +9,63 @@ from trading_graph import TradingGraph
 from default_config import DEFAULT_CONFIG
 
 # --- 1. The Mathematical Verifier ---
-def quantify_pattern_strength(df, llm_report):
+def quantify_pattern_strength(df, raw_llm_response):
     """
-    Parses the qualitative LLM report and uses TA-Lib to strictly 
-    verify if the mathematical conditions for that pattern exist.
+    Combines the LLM's macro visual JSON output with TA-Lib's micro mathematical output.
     """
     if df.empty or len(df) < 2:
-        return {"pattern_name": "None", "direction": 0, "strength_score": 0.0, "normalized_signal": 0.0}
+        return {"error": "Insufficient data"}
 
-    # Extract NumPy arrays required by TA-Lib
-    o = df['Open'].values
-    h = df['High'].values
-    l = df['Low'].values
-    c = df['Close'].values
-
-    report_lower = str(llm_report).lower()
-    
-    pattern_name = "Unknown / No Actionable Pattern"
-    direction = 0
-    ta_score = 0
-
-    # Evaluate Engulfing
-    if "engulfing" in report_lower:
-        ta_score = talib.CDLENGULFING(o, h, l, c)[-1]
-        if ta_score > 0:
-            pattern_name = "Bullish Engulfing"
-        elif ta_score < 0:
-            pattern_name = "Bearish Engulfing"
-
-    # Evaluate Hammer / Pin Bar
-    elif "hammer" in report_lower or "pin" in report_lower:
-        ta_score = talib.CDLHAMMER(o, h, l, c)[-1]
-        if ta_score != 0:
-            pattern_name = "Hammer"
-
-    # Evaluate Doji
-    elif "doji" in report_lower:
-        ta_score = talib.CDLDOJI(o, h, l, c)[-1]
-        if ta_score != 0:
-            pattern_name = "Doji"
-
-    # Process the TA-Lib Score (100 = Bullish, -100 = Bearish, 0 = None)
-    if ta_score > 0:
-        direction = 1
-    elif ta_score < 0:
-        direction = -1
-        
-    strength = 1.0 if direction != 0 else 0.0
-
-    return {
-        "pattern_name": pattern_name,
-        "direction": direction,
-        "strength_score": strength,
-        "normalized_signal": float(direction * strength)
+    # --- 1. PARSE THE MACRO VISION (LLM) ---
+    macro_data = {
+        "macro_pattern_name": "None", 
+        "direction": 0, 
+        "confidence_score": 0.0, 
+        "macro_signal": 0.0
     }
+    
+    try:
+        # Strip potential markdown formatting if the LLM disobeys the prompt
+        clean_json = raw_llm_response.replace("```json", "").replace("```", "").strip()
+        llm_json = json.loads(clean_json)
+        
+        macro_data["macro_pattern_name"] = llm_json.get("macro_pattern_name", "None")
+        macro_data["direction"] = llm_json.get("direction", 0)
+        macro_data["confidence_score"] = llm_json.get("confidence_score", 0.0)
+        macro_data["macro_signal"] = round(macro_data["direction"] * macro_data["confidence_score"], 3)
+    except json.JSONDecodeError:
+        print(f"Failed to parse LLM JSON. Raw output was: {raw_llm_response}")
+
+    # --- 2. CALCULATE THE MICRO MATH (TA-Lib) ---
+    o, h, l, c = df['Open'].values, df['High'].values, df['Low'].values, df['Close'].values
+    
+    micro_name = "None"
+    micro_direction = 0
+    
+    # Run independent TA-Lib checks on the last candle
+    engulfing = talib.CDLENGULFING(o, h, l, c)[-1]
+    hammer = talib.CDLHAMMER(o, h, l, c)[-1]
+    doji = talib.CDLDOJI(o, h, l, c)[-1]
+
+    if engulfing > 0:
+        micro_name, micro_direction = "Bullish Engulfing", 1
+    elif engulfing < 0:
+        micro_name, micro_direction = "Bearish Engulfing", -1
+    elif hammer != 0:
+        micro_name, micro_direction = "Hammer", 1
+    elif doji != 0:
+        micro_name, micro_direction = "Doji", 0 # Indecision
+
+    # --- 3. COMBINE INTO FINAL AGGREGATED VECTOR ---
+    return {
+        "macro_vision": macro_data,
+        "micro_math": {
+            "micro_pattern_name": micro_name,
+            "micro_signal": float(micro_direction)
+        }
+    }
+
+
 
 # --- 2. The Main Execution Engine ---
 def test_native_pattern_agent(symbol="NVDA", timeframe="1d", period="3mo"):
@@ -147,4 +150,4 @@ def test_native_pattern_agent(symbol="NVDA", timeframe="1d", period="3mo"):
         print(f"An error occurred during execution: {e}")
 
 if __name__ == "__main__":
-    test_native_pattern_agent(symbol="BTC-USD", timeframe="1d", period="3mo")
+    test_native_pattern_agent(symbol="NVDA", timeframe="1d", period="1mo")

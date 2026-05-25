@@ -10,6 +10,7 @@ from langchain_anthropic import ChatAnthropic
 from langchain_core.language_models import BaseChatModel
 from langchain_openai import ChatOpenAI
 from langchain_qwq import ChatQwen
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.prebuilt import ToolNode
 
 from default_config import DEFAULT_CONFIG
@@ -17,7 +18,7 @@ from graph_setup import SetGraph
 from graph_util import TechnicalTools
 
 
-SUPPORTED_PROVIDERS = ("openai", "anthropic", "qwen", "minimax", "minimax_cn")
+SUPPORTED_PROVIDERS = ("openai", "anthropic", "qwen", "minimax", "minimax_cn", "google")
 MINIMAX_PROVIDER_CONFIG = {
     "minimax": {
         "label": "MiniMax",
@@ -150,6 +151,33 @@ class TradingGraph:
                     "Please provide your actual Qwen API key. "
                     "You can get one from: https://dashscope.console.aliyun.com/"
                 )
+        # Provider gor google gemini added - hardcoded based on API key storage in manual location
+        elif provider == "google":
+            # 1. Check if passed via config dictionary
+            api_key = self.config.get("google_api_key")
+            
+            # 2. Check environment variables
+            if not api_key:
+                api_key = os.environ.get("GOOGLE_API_KEY")
+                
+            # 3. Check your specific local text file
+            if not api_key:
+                try:
+                    key_path = os.path.abspath(os.path.join(os.getcwd(), '..', 'Gemini_API.txt'))
+                    with open(key_path, "r") as file:
+                        api_key = file.read().strip()
+                except FileNotFoundError:
+                    pass # Fails silently here so the ValueError below can handle it
+                
+            # 4. Final validation
+            if not api_key:
+                raise ValueError(
+                    "Google API key not found. Please ensure your key is saved at: \n"
+                    f"{os.path.abspath(os.path.join(os.getcwd(), '..', 'Gemini_API.txt'))}"
+                )
+         
+
+
         elif provider in MINIMAX_PROVIDER_CONFIG:
             provider_config = MINIMAX_PROVIDER_CONFIG[provider]
             api_key = self.config.get(provider_config["config_key"])

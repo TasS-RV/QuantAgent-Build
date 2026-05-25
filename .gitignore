@@ -8,3 +8,18 @@ pdf_content.txt
 read.html
 read_files/
 app/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Backtest outputs
+backtest_results/
+backtest_smoke/
+backtest_results.log
+*.cache
+
+# Local venv / IDE
+.venv/
+.claude/

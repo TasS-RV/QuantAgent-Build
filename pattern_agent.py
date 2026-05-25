@@ -33,25 +33,29 @@ def create_pattern_agent(tool_llm, graph_llm, toolkit):
         # --- Tool and pattern definitions ---
         tools = [toolkit.generate_kline_image]
         time_frame = state["time_frame"]
-        pattern_text = """
-        Please refer to the following classic candlestick patterns:
+        stock_name = state.get("stock_name", "the asset")
+        
+        # --- UNIFIED PATTERN TEXT AND JSON SCHEMA ---
+        pattern_text = f"""
+        You are a quantitative vision model analyzing a {time_frame} candlestick chart for {stock_name}.
+        Identify if any of these macro patterns are present:
+        1. Inverse Head and Shoulders
+        2. Double Bottom
+        3. Rounded Bottom / Rounded Top
+        4. Falling Wedge / Rising Wedge
+        5. Ascending / Descending Triangle
+        6. Bullish / Bearish Flag
+        7. Rectangle
+        8. Symmetrical Triangle
 
-        1. Inverse Head and Shoulders: Three lows with the middle one being the lowest, symmetrical structure, typically indicates an upcoming upward trend.
-        2. Double Bottom: Two similar low points with a rebound in between, forming a 'W' shape.
-        3. Rounded Bottom: Gradual price decline followed by a gradual rise, forming a 'U' shape.
-        4. Hidden Base: Horizontal consolidation followed by a sudden upward breakout.
-        5. Falling Wedge: Price narrows downward, usually breaks out upward.
-        6. Rising Wedge: Price rises slowly but converges, often breaks down.
-        7. Ascending Triangle: Rising support line with a flat resistance on top, breakout often occurs upward.
-        8. Descending Triangle: Falling resistance line with flat support at the bottom, typically breaks down.
-        9. Bullish Flag: After a sharp rise, price consolidates downward briefly before continuing upward.
-        10. Bearish Flag: After a sharp drop, price consolidates upward briefly before continuing downward.
-        11. Rectangle: Price fluctuates between horizontal support and resistance.
-        12. Island Reversal: Two price gaps in opposite directions forming an isolated price island.
-        13. V-shaped Reversal: Sharp decline followed by sharp recovery, or vice versa.
-        14. Rounded Top / Rounded Bottom: Gradual peaking or bottoming, forming an arc-shaped pattern.
-        15. Expanding Triangle: Highs and lows increasingly wider, indicating volatile swings.
-        16. Symmetrical Triangle: Highs and lows converge toward the apex, usually followed by a breakout.
+        OUTPUT STRICTLY AS A RAW JSON OBJECT. DO NOT wrap it in markdown block quotes (e.g., no ```json).
+        Schema:
+        {{
+            "macro_pattern_name": "<Name of the pattern, or 'None'>",
+            "direction": <1 for Bullish, -1 for Bearish, 0 for Neutral/None>,
+            "confidence_score": <Float between 0.0 and 1.0 indicating how clear the structure is>,
+            "justification": "<One short sentence explaining why>"
+        }}
         """
 
         # --- Check for precomputed image in state ---
@@ -87,10 +91,10 @@ def create_pattern_agent(tool_llm, graph_llm, toolkit):
                 [
                     (
                         "system",
-                        "You are a trading pattern recognition assistant tasked with identifying classical high-frequency trading patterns. "
+                        "You are a trading pattern recognition assistant. "
                         "You have access to tool: generate_kline_image. "
-                        "Use it by providing appropriate arguments like `kline_data`\n\n"
-                        "Once the chart is generated, compare it to classical pattern descriptions and determine if any known pattern is present.",
+                        "Once generated, you MUST evaluate the chart using these rules:\n\n"
+                        f"{pattern_text}"
                     ),
                     MessagesPlaceholder(variable_name="messages"),
                 ]
@@ -125,12 +129,7 @@ def create_pattern_agent(tool_llm, graph_llm, toolkit):
             image_prompt = [
                 {
                     "type": "text",
-                    "text": (
-                        f"This is a {time_frame} candlestick chart generated from recent OHLC market data.\n\n"
-                        f"{pattern_text}\n\n"
-                        "Determine whether the chart matches any of the patterns listed. "
-                        "Clearly name the matched pattern(s), and explain your reasoning based on structure, trend, and symmetry."
-                    ),
+                    "text": pattern_text,
                 },
                 {
                     "type": "image_url",
@@ -139,7 +138,6 @@ def create_pattern_agent(tool_llm, graph_llm, toolkit):
             ]
 
             # Create messages - ensure HumanMessage has valid content
-            # For Anthropic, SystemMessage is extracted separately, but messages array must have at least one message
             human_msg = HumanMessage(content=image_prompt)
             
             # Verify HumanMessage content is valid
@@ -163,9 +161,7 @@ def create_pattern_agent(tool_llm, graph_llm, toolkit):
             except Exception as e:
                 error_str = str(e)
                 # Handle Anthropic's "at least one message is required" error
-                # This can happen when SystemMessage extraction leaves empty messages array
                 if "at least one message" in error_str.lower():
-                    # Retry with only HumanMessage (SystemMessage will be lost but Anthropic should work)
                     print("Retrying with HumanMessage only due to Anthropic message conversion issue...")
                     final_response = invoke_with_retry(
                         graph_llm.invoke,

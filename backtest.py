@@ -20,6 +20,8 @@ except ImportError:
 
 import pandas as pd
 import yfinance as yf
+from tqdm.asyncio import tqdm as atqdm
+from tqdm import tqdm
 
 import indicators  # noqa: F401  (warms up pandas-ta)
 from quant_agents import run_pipeline_async
@@ -120,7 +122,13 @@ async def backtest_symbol(
             return idx, d, c, j
 
     tasks = [decide(i) for i in rebalance_idxs]
-    results = await asyncio.gather(*tasks)
+    results = await atqdm.gather(
+        *tasks,
+        desc=f"  {symbol:<6} decisions",
+        unit="bar",
+        leave=False,
+        dynamic_ncols=True,
+    )
     results.sort(key=lambda r: r[0])
 
     trades: list[Trade] = []
@@ -161,11 +169,13 @@ async def backtest_universe(
 
     all_trades: dict[str, list[Trade]] = {}
     histories: dict[str, pd.DataFrame] = {}
-    for symbol in symbols:
-        print(f"[{symbol}] fetching {period} history...", flush=True)
+    symbols = list(symbols)
+    sym_bar = tqdm(symbols, desc="symbols", unit="sym", dynamic_ncols=True)
+    for symbol in sym_bar:
+        sym_bar.set_postfix_str(f"fetching {symbol}")
         df = fetch_history(symbol, period=period)
         idxs = rebalance_dates(df, cadence=cadence)
-        print(f"[{symbol}] {len(df)} bars, {len(idxs)} decision points", flush=True)
+        sym_bar.set_postfix_str(f"{symbol}: {len(df)}b / {len(idxs)} decisions")
         histories[symbol] = df
 
         trades = await backtest_symbol(symbol, df, idxs, concurrency=concurrency)
@@ -175,8 +185,8 @@ async def backtest_universe(
         pd.DataFrame([asdict(t) for t in trades]).to_csv(
             out_dir / f"{symbol}_trades.csv", index=False
         )
-        print(f"[{symbol}] {len(trades)} trades, mean PnL/trade = "
-              f"{(sum(t.pnl_pct for t in trades) / len(trades) * 100 if trades else 0):.3f}%", flush=True)
+        mean_pnl = (sum(t.pnl_pct for t in trades) / len(trades) * 100) if trades else 0.0
+        sym_bar.write(f"[{symbol}] {len(trades)} trades, mean PnL/trade = {mean_pnl:+.3f}%")
 
     # Build a unified summary
     summary_rows = []

@@ -216,15 +216,9 @@ class TradingGraph:
     ) -> BaseChatModel:
         """
         Create an LLM instance based on the provider.
-
-        Args:
-            provider: The provider name ("openai", "anthropic", "qwen", "minimax", or "minimax_cn")
-            model: The model name (e.g., "gpt-4o", "claude-3-5-sonnet-20241022", "qwen-vl-max-latest", "MiniMax-M2.7")
-            temperature: The temperature setting for the model
-
-        Returns:
-            BaseChatModel: An instance of the appropriate LLM class
         """
+        # Force lowercase to prevent "Google" vs "google" capitalization crashes
+        provider = provider.lower() 
         api_key = self._get_api_key(provider)
 
         if provider == "openai":
@@ -235,8 +229,6 @@ class TradingGraph:
             )
         elif provider == "anthropic":
             # ChatAnthropic handles SystemMessage extraction automatically
-            # It extracts SystemMessage from the message list and passes it as 'system' parameter
-            # The messages array should contain at least one non-SystemMessage
             return ChatAnthropic(
                 model=model,
                 temperature=temperature,
@@ -250,8 +242,7 @@ class TradingGraph:
                 max_retries=4,
             )
         elif provider in MINIMAX_PROVIDER_CONFIG:
-            # MiniMax uses OpenAI-compatible APIs; CN and global differ by base URL.
-            # Temperature must be in (0.0, 1.0] for MiniMax.
+            # MiniMax uses OpenAI-compatible APIs
             clamped_temp = max(0.01, min(temperature, 1.0))
             return ChatOpenAI(
                 model=model,
@@ -259,9 +250,15 @@ class TradingGraph:
                 api_key=api_key,
                 openai_api_base=MINIMAX_PROVIDER_CONFIG[provider]["base_url"],
             )
+        elif provider == "google":
+            return ChatGoogleGenerativeAI(
+                model=model,
+                temperature=temperature,
+                google_api_key=api_key,
+                max_retries=4,
+            )
         else:
             raise ValueError(f"Unsupported provider: {provider}. Must be one of {', '.join(SUPPORTED_PROVIDERS)}")
-
     # def _set_tool_nodes(self) -> Dict[str, ToolNode]:
     #     """
     #     Define tool nodes for each agent type (indicator, pattern, trend).

@@ -1,13 +1,19 @@
+import os
+from pathlib import Path
+
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv(Path(__file__).resolve().parent / ".env")
+except ImportError:
+    pass
+
+
 DEFAULT_CONFIG = {
-    "agent_llm_model": "gpt-4o-mini",
-    "graph_llm_model": "gpt-4o",
-    "agent_llm_provider": "openai",  # "openai", "anthropic", "qwen", "minimax", or "minimax_cn"
-    "graph_llm_provider": "openai",  # "openai", "anthropic", "qwen", "minimax", or "minimax_cn"
-    "agent_llm_temperature": 0.1,
-    "graph_llm_temperature": 0.1,
-    "api_key": "sk-",  # OpenAI API key
-    "anthropic_api_key": "sk-",  # Anthropic API key (optional, can also use ANTHROPIC_API_KEY env var)
-    "qwen_api_key": "sk-",  # Qwen API key (optional, can also use DASHSCOPE_API_KEY env var)
-    "minimax_api_key": "",  # MiniMax API key (optional, can also use MINIMAX_API_KEY env var)
-    "minimax_cn_api_key": "",  # MiniMax CN API key (optional, can also use MINIMAX_CN_API_KEY or MINIMAX_API_KEY env var)
+    "llm_provider": "openai",
+    "agent_llm_model": os.environ.get("AGENT_LLM_MODEL", "gpt-4o-mini"),
+    "vision_llm_model": os.environ.get("VISION_LLM_MODEL", "gpt-4o-mini"),
+    "decision_llm_model": os.environ.get("DECISION_LLM_MODEL", "gpt-4o-mini"),
+    "temperature": 0.1,
+    "openai_api_key": os.environ.get("OPENAI_API_KEY", ""),
 }

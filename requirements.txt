@@ -1,19 +1,24 @@
+# Core LLM + agent framework
+openai>=2.0
+openai-agents>=0.17
+python-dotenv>=1.0
+pydantic>=2.0
+
+# Market data + indicators
+yfinance>=1.4
+pandas>=2.2
+numpy>=1.26
+pandas-ta>=0.4
+scipy>=1.13
+
+# Charting
+matplotlib>=3.9
+mplfinance>=0.12
+Pillow>=10
+
+# Web UI (kept from previous build)
 flask
-yfinance
-pandas
-numpy
-matplotlib
-mplfinance
-scipy
-TA-Lib
-langchain
-langchain-openai
-langchain-anthropic
-langchain-qwq
-langchain-core
-langgraph
-openai
-anthropic
-ipython
-Pillow
 requests
+
+# Optional: required on systems missing a stdlib _sqlite3 build (yfinance caches via sqlite)
+pysqlite3-binary

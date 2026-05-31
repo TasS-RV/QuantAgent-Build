@@ -315,7 +315,7 @@ def create_indicator_agent(llm, toolkit):
         if not messages:
             messages = [HumanMessage(content="Begin indicator analysis.")]
 
-        ai_response = chain.invoke(messages)
+        ai_response = chain.invoke({"messages": messages})
         messages.append(ai_response)
 
         if hasattr(ai_response, "tool_calls") and ai_response.tool_calls:
@@ -337,7 +337,7 @@ def create_indicator_agent(llm, toolkit):
 
         while iteration < max_iterations:
             iteration += 1
-            final_response = chain.invoke(messages)
+            final_response = chain.invoke({"messages": messages})
             messages.append(final_response)
 
             if not hasattr(final_response, "tool_calls") or not final_response.tool_calls:

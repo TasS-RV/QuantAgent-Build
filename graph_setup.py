@@ -78,3 +78,57 @@ class SetGraph:
         graph.add_edge("Decision Maker", END)
 
         return graph.compile()
+
+    def set_graph_quant(
+        self,
+        weights: Dict = None,
+        thresholds: Dict = None,
+        atr_multiplier_sl: float = 2.0,
+        risk_reward_target: float = 2.0,
+        allow_short: bool = True,
+    ):
+        """
+        Same perception pipeline (Indicator → Pattern → Trend) but replaces the
+        LLM-based Decision Maker with the pure-math quant node.  No LLM call is
+        made in the final step, making decisions fully deterministic and
+        backtestable.
+        """
+        from decision_agent_quant import create_quant_decision_node
+
+        agent_nodes = {}
+        all_agents = ["indicator", "pattern", "trend"]
+
+        agent_nodes["indicator"] = create_indicator_agent(self.graph_llm, self.toolkit)
+        agent_nodes["pattern"] = create_pattern_agent(
+            self.agent_llm, self.graph_llm, self.toolkit
+        )
+        agent_nodes["trend"] = create_trend_agent(
+            self.agent_llm, self.graph_llm, self.toolkit
+        )
+
+        decision_node = create_quant_decision_node(
+            weights=weights,
+            thresholds=thresholds,
+            atr_multiplier_sl=atr_multiplier_sl,
+            risk_reward_target=risk_reward_target,
+            allow_short=allow_short,
+        )
+
+        graph = StateGraph(IndicatorAgentState)
+
+        for agent_type, cur_node in agent_nodes.items():
+            graph.add_node(f"{agent_type.capitalize()} Agent", cur_node)
+
+        graph.add_node("Decision Maker", decision_node)
+        graph.add_edge(START, "Indicator Agent")
+
+        for i, agent_type in enumerate(all_agents):
+            current_agent = f"{agent_type.capitalize()} Agent"
+            if i == len(all_agents) - 1:
+                graph.add_edge(current_agent, "Decision Maker")
+            else:
+                next_agent = f"{all_agents[i + 1].capitalize()} Agent"
+                graph.add_edge(current_agent, next_agent)
+
+        graph.add_edge("Decision Maker", END)
+        return graph.compile()

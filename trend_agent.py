@@ -27,6 +27,71 @@ def invoke_with_retry(call_fn, *args, retries=3, wait_sec=4):
     raise RuntimeError("Max retries exceeded")
 
 
+def _close_prices_from_kline(kline_data):
+    """Extract close prices from kline_data (dict-of-lists or list-of-dicts)."""
+    if isinstance(kline_data, dict) and "Close" in kline_data:
+        return np.array(kline_data["Close"], dtype=float)
+    return np.array([float(k["Close"]) for k in kline_data], dtype=float)
+
+
+def quantify_trend_strength(close_prices):
+    """
+    Calculates a Linear Regression Channel and scores the current price position.
+    Returns a normalized vector [-1.0, 1.0] for the Decision Agent.
+    """
+    y = np.asarray(close_prices, dtype=float)
+    if y.size == 0 or len(y) < 10:
+        return {"trend_direction": "None", "slope": 0.0, "normalized_signal": 0.0}
+
+    x = np.arange(len(y))
+
+    slope, intercept, r_value, p_value, std_err = linregress(x, y)
+    regression_line = slope * x + intercept
+
+    std_dev = np.std(y - regression_line)
+    upper_channel = regression_line + (2 * std_dev)
+    lower_channel = regression_line - (2 * std_dev)
+
+    current_price = y[-1]
+    current_upper = upper_channel[-1]
+    current_lower = lower_channel[-1]
+
+    direction_label = "Uptrend" if slope > 0 else "Downtrend"
+
+    channel_range = current_upper - current_lower
+    if channel_range == 0:
+        return {"trend_direction": "Flat", "slope": 0.0, "normalized_signal": 0.0}
+
+    position = (current_price - current_lower) / channel_range
+
+    if position > 1.0:
+        normalized_signal = 1.0
+    elif position < 0.0:
+        normalized_signal = -1.0
+    else:
+        normalized_signal = 1.0 - (position * 2.0)
+
+    if slope > 0 and normalized_signal > 0:
+        normalized_signal = min(normalized_signal * 1.2, 1.0)
+    elif slope < 0 and normalized_signal < 0:
+        normalized_signal = max(normalized_signal * 1.2, -1.0)
+
+    return {
+        "trend_direction": direction_label,
+        "slope": round(slope, 4),
+        "current_price": round(current_price, 2),
+        "support_level": round(current_lower, 2),
+        "resistance_level": round(current_upper, 2),
+        "channel_position": round(position, 3),
+        "normalized_signal": round(normalized_signal, 3),
+    }
+
+
+def quantify_trend_from_kline(kline_data):
+    """Run trend quantification on kline_data (dict-of-lists or list-of-dicts)."""
+    return quantify_trend_strength(_close_prices_from_kline(kline_data))
+
+
 def create_trend_agent(tool_llm, graph_llm, toolkit):
     """
     Create a trend analysis agent node for HFT. 
@@ -126,49 +191,11 @@ def create_trend_agent(tool_llm, graph_llm, toolkit):
         else:
             final_response = invoke_with_retry(chain.invoke, messages)
 
-        # ==========================================
-        # --- NEW: STRICT MATHEMATICAL CALCULATOR ---
-        # ==========================================
         kline_data = state.get("kline_data", {})
         math_metrics = {"trend_direction": "Unknown", "normalized_signal": 0.0}
-        
+
         try:
-            # Handle both dictionary formats (list of dicts vs dict of lists)
-            if isinstance(kline_data, dict) and "Close" in kline_data:
-                y = np.array(kline_data["Close"], dtype=float)
-            else:
-                y = np.array([float(k['Close']) for k in kline_data])
-
-            if len(y) > 5:
-                x = np.arange(len(y))
-                slope, intercept, _, _, _ = linregress(x, y)
-                regression_line = slope * x + intercept
-                std_dev = np.std(y - regression_line)
-                
-                current_price = y[-1]
-                current_upper = regression_line[-1] + (2 * std_dev)
-                current_lower = regression_line[-1] - (2 * std_dev)
-                
-                channel_range = current_upper - current_lower
-                position = (current_price - current_lower) / channel_range if channel_range > 0 else 0.5
-                
-                # Base Signal
-                if position > 1.0: normalized_signal = 1.0
-                elif position < 0.0: normalized_signal = -1.0
-                else: normalized_signal = 1.0 - (position * 2.0)
-
-                # Alignment Boost
-                if slope > 0 and normalized_signal > 0:
-                    normalized_signal = min(normalized_signal * 1.2, 1.0)
-                elif slope < 0 and normalized_signal < 0:
-                    normalized_signal = max(normalized_signal * 1.2, -1.0)
-
-                math_metrics = {
-                    "trend_direction": "Uptrend" if slope > 0 else "Downtrend",
-                    "slope": round(slope, 4),
-                    "channel_position": round(position, 3),
-                    "normalized_signal": round(normalized_signal, 3)
-                }
+            math_metrics = quantify_trend_from_kline(kline_data)
         except Exception as e:
             print(f"Mathematical trend evaluation failed: {e}")
 

@@ -132,3 +132,47 @@ class SetGraph:
 
         graph.add_edge("Decision Maker", END)
         return graph.compile()
+
+    def set_graph_full_quant(
+        self,
+        weights: Dict = None,
+        thresholds: Dict = None,
+        atr_multiplier_sl: float = 2.0,
+        risk_reward_target: float = 2.0,
+        allow_short: bool = True,
+    ):
+        """
+        Fully deterministic pipeline — zero LLM calls.
+
+        All three perception agents are replaced with pure-math equivalents:
+          Indicator : TA-Lib (RSI / MACD / Stoch / WillR / ROC)
+          Trend     : scipy linear-regression channel
+          Pattern   : TA-Lib CDL candlestick pattern aggregation
+        Decision    : weighted signal combination (decision_agent_quant.py)
+
+        Use this when you have no API quota or want a backtestable, reproducible
+        signal pipeline.
+        """
+        from quant_nodes import quant_indicator_node, quant_trend_node, quant_pattern_node
+        from decision_agent_quant import create_quant_decision_node
+
+        decision_node = create_quant_decision_node(
+            weights=weights,
+            thresholds=thresholds,
+            atr_multiplier_sl=atr_multiplier_sl,
+            risk_reward_target=risk_reward_target,
+            allow_short=allow_short,
+        )
+
+        graph = StateGraph(IndicatorAgentState)
+        graph.add_node("Indicator Agent", quant_indicator_node)
+        graph.add_node("Pattern Agent",   quant_pattern_node)
+        graph.add_node("Trend Agent",     quant_trend_node)
+        graph.add_node("Decision Maker",  decision_node)
+
+        graph.add_edge(START, "Indicator Agent")
+        graph.add_edge("Indicator Agent", "Pattern Agent")
+        graph.add_edge("Pattern Agent",   "Trend Agent")
+        graph.add_edge("Trend Agent",     "Decision Maker")
+        graph.add_edge("Decision Maker",  END)
+        return graph.compile()

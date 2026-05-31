@@ -31,6 +31,7 @@ import os
 import sys
 from dataclasses import asdict
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Dict, List, Optional
 
 import pandas as pd
@@ -81,7 +82,11 @@ DECISION_CONFIG: dict = {
 #  LLM CONFIG — edit or pass via CLI
 # ─────────────────────────────────────────────────────────────────────────────
 
-DEFAULT_LLM_PROVIDER = "openai"   # openai | anthropic | qwen | minimax | google
+DEFAULT_LLM_PROVIDER = "google"   # openai | anthropic | qwen | minimax | google
+
+GEMINI_KEY_FILE = Path(__file__).resolve().parent.parent / "Gemini_API.txt"
+DEFAULT_GEMINI_AGENT_MODEL = "gemini-2.0-flash-lite"
+DEFAULT_GEMINI_GRAPH_MODEL = "gemini-2.0-flash-lite"
 
 # Max data yfinance returns per timeframe
 _YFINANCE_MAX_DAYS: Dict[str, int] = {
@@ -89,6 +94,48 @@ _YFINANCE_MAX_DAYS: Dict[str, int] = {
     "60m": 730, "1h": 730,
     "1d": 3650, "5d": 3650, "1wk": 3650, "1mo": 3650,
 }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  LLM CONFIG HELPERS
+# ─────────────────────────────────────────────────────────────────────────────
+
+def load_google_api_key() -> Optional[str]:
+    """Load Gemini API key from Playground/Gemini_API.txt or GOOGLE_API_KEY env var."""
+    if GEMINI_KEY_FILE.is_file():
+        key = GEMINI_KEY_FILE.read_text(encoding="utf-8").strip()
+        if key:
+            return key
+    return os.environ.get("GOOGLE_API_KEY")
+
+
+def build_llm_config(provider: str, api_key: Optional[str] = None) -> dict:
+    """Build TradingGraph LLM config for the chosen provider."""
+    _key_map = {
+        "openai":     "api_key",
+        "anthropic":  "anthropic_api_key",
+        "qwen":       "qwen_api_key",
+        "minimax":    "minimax_api_key",
+        "minimax_cn": "minimax_cn_api_key",
+        "google":     "google_api_key",
+    }
+
+    llm_config: dict = {
+        "agent_llm_provider": provider,
+        "graph_llm_provider": provider,
+    }
+
+    if provider == "google":
+        llm_config["agent_llm_model"] = DEFAULT_GEMINI_AGENT_MODEL
+        llm_config["graph_llm_model"] = DEFAULT_GEMINI_GRAPH_MODEL
+        resolved_key = api_key or load_google_api_key()
+        if resolved_key:
+            llm_config["google_api_key"] = resolved_key
+            os.environ["GOOGLE_API_KEY"] = resolved_key
+    elif api_key:
+        llm_config[_key_map.get(provider, "api_key")] = api_key
+
+    return llm_config
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -249,19 +296,7 @@ def main() -> List[dict]:
     args = parse_args()
 
     # --- Build LLM config ---
-    _key_map = {
-        "openai":     "api_key",
-        "anthropic":  "anthropic_api_key",
-        "qwen":       "qwen_api_key",
-        "minimax":    "minimax_api_key",
-        "minimax_cn": "minimax_cn_api_key",
-    }
-    llm_config: dict = {
-        "agent_llm_provider": args.provider,
-        "graph_llm_provider": args.provider,
-    }
-    if args.api_key:
-        llm_config[_key_map.get(args.provider, "api_key")] = args.api_key
+    llm_config = build_llm_config(args.provider, args.api_key)
 
     # --- Merge decision config with CLI overrides ---
     dec_cfg = {**DECISION_CONFIG}

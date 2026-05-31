@@ -4,6 +4,7 @@ pandas
 numpy
 matplotlib
 mplfinance
+plotly
 scipy
 TA-Lib
 langchain

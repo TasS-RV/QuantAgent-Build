@@ -28,23 +28,26 @@ _TALIB_WARNED = False
 
 
 def _talib_signals(kline_data: dict):
-    """Return (indicator_report_json, pattern_report_json) or (None, None) without TA-Lib."""
+    """
+    Return (indicator_report_json, pattern_report_json), or (None, None) if the
+    TA-Lib-backed indicator/pattern signals can't be computed (TA-Lib missing or
+    computation fails) — the caller then falls back to a trend-only decision.
+    """
     global _TALIB_WARNED
     try:
         from indicator_agent import quantify_indicators_from_kline
         from quant_nodes import quantify_candlestick_patterns
+
+        ind = quantify_indicators_from_kline(kline_data)
+        pat = quantify_candlestick_patterns(kline_data)
+        return json.dumps({"quantitative_metrics": ind}), json.dumps(pat)
     except Exception:
         if not _TALIB_WARNED:
-            warnings.warn("TA-Lib unavailable — using trend-only signal "
-                          "(indicator/pattern contributions = 0).", RuntimeWarning)
+            warnings.warn("TA-Lib indicator/pattern signals unavailable — using "
+                          "trend-only signal (indicator/pattern contributions = 0).",
+                          RuntimeWarning)
             _TALIB_WARNED = True
         return None, None
-
-    ind = quantify_indicators_from_kline(kline_data)
-    pat = quantify_candlestick_patterns(kline_data)
-    ind_report = json.dumps({"quantitative_metrics": ind})
-    pat_report = json.dumps(pat)
-    return ind_report, pat_report
 
 
 def compute_quant_decision(

@@ -9,6 +9,10 @@ from unittest.mock import MagicMock, patch, PropertyMock
 # Add project root to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 os.environ.setdefault("MPLCONFIGDIR", "/private/tmp/matplotlib")
+# The merged default config uses the Google provider; TradingGraph() requires a
+# key to construct. langchain_google_genai is mocked below, so a dummy key here
+# lets WebInterface()/TradingGraph() build without a real Gemini key.
+os.environ.setdefault("GOOGLE_API_KEY", "test-google-key")
 
 # Mock heavy native/incompatible dependencies before importing project modules
 # TA-Lib requires a C library; langchain has pydantic v1/v2 conflicts
@@ -21,6 +25,7 @@ MOCK_MODULES = [
     "langchain_core.tools",
     "langchain_openai",
     "langchain_qwq",
+    "langchain_google_genai",
     "langgraph",
     "langgraph.graph",
     "langgraph.prebuilt",
@@ -28,6 +33,8 @@ MOCK_MODULES = [
     "matplotlib.pyplot",
     "mplfinance",
     "yfinance",
+    "openai",
+    "anthropic",
 ]
 
 for mod_name in MOCK_MODULES:

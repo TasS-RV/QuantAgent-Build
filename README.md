@@ -268,6 +268,27 @@ python run_single.py --symbol NVDA --period 6mo --interval 1d
 python backtest.py --symbols NVDA AAPL MSFT --period 5y --cadence W-FRI --concurrency 4 --out backtest_results
 ```
 
+**Deterministic engine + risk overlays (`backtest_engine.py`).** Signal generation
+(the expensive, non-deterministic LLM step) is now separated from trade simulation
+(pure, reproducible math). The engine implements the [Backtest Improvement
+Roadmap](docs/BACKTEST_IMPROVEMENT_ROADMAP.md): **HOLD** as cash, a **200-day SMA
+trend filter** (never short an uptrend / long a downtrend), a **confidence gate**,
+**trading costs** (commission + slippage per side, short borrow), and **ATR
+stop/target exits** (target = `risk_reward_ratio` × stop distance). It also runs
+**trivial baselines** — buy & hold, always-long, 200dma trend-follower, seeded
+random — and prints a pass/fail verdict vs the 200dma baseline.
+
+```bash
+# Tune overlays and add an out-of-sample window
+python backtest.py --symbols NVDA AAPL --cadence W-FRI \
+    --confidence-gate 0.75 --atr-mult 1.5 --commission 0.0002 --slippage 0.0005 \
+    --oos-start 2025-01-01            # also reports OOS metrics
+python backtest.py --no-trend-filter --no-stops --no-short   # ablations
+```
+
+Outputs: `summary.csv`, `baselines.csv`, per-symbol `*_trades.csv`, and
+`all_signals.json` (consumed by the validator below).
+
 > ⚠️ **Model config for this stack.** `quant_agents.py` reads `agent_llm_model` / `vision_llm_model` / `decision_llm_model` as **OpenAI** model names, but the repo-wide default of `agent_llm_model` is a Gemini model (the fork's primary pipeline). To run the backtest stack, set an OpenAI key and override the model, e.g.:
 > ```bash
 > export OPENAI_API_KEY="sk-..."
@@ -277,6 +298,50 @@ python backtest.py --symbols NVDA AAPL MSFT --period 5y --cadence W-FRI --concur
 > Or pass a config dict to `run_pipeline(...)`. Optionally put these in a `.env` file (auto-loaded — see `.env.example`).
 
 See [`IMPROVEMENTS.md`](IMPROVEMENTS.md), [`docs/PIPELINE_COMPARISON.md`](docs/PIPELINE_COMPARISON.md), and the backtest docs under [`docs/`](docs/) for details.
+
+### C. VectorBT validation (`validate_vectorbt.py`)
+
+Independently validates the backtest/decision signals with **VectorBT**. It reads
+`all_signals.json` (or a `master_portfolio --output` file), converts the dated
+directional signals into a long/short position series, and evaluates it with
+`vbt.Portfolio.from_signals` (fees + slippage). If VectorBT isn't installed it
+falls back to the deterministic engine, so it always runs.
+
+```bash
+python validate_vectorbt.py --signals backtest_results/all_signals.json \
+    --history-dir backtest_results --fees 0.0007
+```
+
+### D. Scheduled portfolio analysis → Telegram (`portfolio_scheduler.py`)
+
+Pulls your holdings (Trading 212 portfolio, a watchlist, or a built-in mock),
+fetches recent OHLC, runs the **free, deterministic** quant decision per holding
+(`quant_signal.py` — no LLM, so it's repeatable and costs nothing), and pushes a
+consolidated BUY/SELL/HOLD message to Telegram every interval.
+
+```bash
+python portfolio_scheduler.py --source mock --once --no-telegram      # keyless dry run
+python portfolio_scheduler.py --source watchlist --symbols AAPL NVDA --interval 3600
+python portfolio_scheduler.py --source t212 --once                    # live Trading 212 portfolio
+python portfolio_scheduler.py --source t212 --sentiment-weight 0.2    # blend in news sentiment (§E)
+```
+
+> **Trading 212 key.** Save your API key (Settings → API in the T212 app) as
+> `../trading212_key.txt` (one folder above the repo, like the other secrets), or
+> set `TRADING212_API_KEY`. Add `TRADING212_DEMO=1` for the practice account.
+>
+> **ETF caveat (issue #3).** Trading 212 returns an ETF as a single position, so
+> the pipeline analyses the ETF's *own* price series — not its underlying
+> constituents. ETF lines in the Telegram message are tagged accordingly.
+
+### E. FinBERT news sentiment (`sentiment_agent.py`) — optional
+
+An optional overlay using **ProsusAI/finbert** that scores recent headlines into a
+sentiment signal ∈ [-1, 1] and blends it into the decision's combined signal,
+re-deriving BUY/HOLD/SELL/SHORT (adjusting the decision-agent output, issue #5).
+Enable it on the scheduler with `--sentiment-weight 0.2`. Requires `transformers`
++ `torch` (optional, commented in `requirements.txt`); if absent, the overlay is a
+no-op and decisions are unchanged.
 
 ## 📺 Demo
 

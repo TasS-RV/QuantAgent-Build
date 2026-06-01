@@ -6,7 +6,7 @@ import asyncio
 import json
 import os
 from dataclasses import dataclass
-from typing import Any, Literal
+from typing import Literal
 
 from agents import Agent, ModelSettings, Runner
 from pydantic import BaseModel, Field

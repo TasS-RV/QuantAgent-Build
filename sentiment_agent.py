@@ -168,7 +168,7 @@ def apply_sentiment(
     """
     t = {**DEFAULT_THRESHOLDS, **(thresholds or {})}
     if not sentiment.available:
-        note = f" | sentiment=unavailable"
+        note = " | sentiment=unavailable"
         return replace(decision, decision_rationale=decision.decision_rationale + note)
 
     new_signal = blend_signal(decision.combined_signal, sentiment.signal, sentiment_weight)

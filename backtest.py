@@ -161,6 +161,7 @@ async def backtest_universe(
     cfg = cfg or SimConfig(periods_per_year=_periods_per_year(cadence))
 
     all_signals: dict[str, list[Signal]] = {}
+    all_trades: dict[str, list[dict]] = {}
     histories: dict[str, pd.DataFrame] = {}
     summary_rows: list[dict] = []
     baseline_rows: list[dict] = []
@@ -183,7 +184,9 @@ async def backtest_universe(
         bl = run_with_baselines(symbol, df, signals, idxs, cfg)
 
         # Persist per-symbol trade log
-        trades_to_frame(trades).to_csv(out_dir / f"{symbol}_trades.csv", index=False)
+        trades_df = trades_to_frame(trades)
+        trades_df.to_csv(out_dir / f"{symbol}_trades.csv", index=False)
+        all_trades[symbol] = trades_df.to_dict(orient="records")
 
         row = {
             "symbol": symbol,
@@ -238,6 +241,8 @@ async def backtest_universe(
         for sym, sigs in all_signals.items()
     }
     (out_dir / "all_signals.json").write_text(json.dumps(combined, indent=2))
+    # all_trades.json: simulated trades per symbol (consumed by visualize.py)
+    (out_dir / "all_trades.json").write_text(json.dumps(all_trades, indent=2))
     for sym, df in histories.items():
         df.to_csv(out_dir / f"{sym}_history.csv", index=False)
 

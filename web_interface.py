@@ -365,6 +365,10 @@ class WebTradingAnalyzer:
                 "trend_image": t_image["trend_image"],
             }
 
+            # Build the graph if startup was deferred (no API key yet); raises a
+            # clear ValueError if a key is still missing.
+            self.trading_graph.ensure_initialized()
+
             # Run the trading graph
             final_state = self.trading_graph.graph.invoke(initial_state)
 

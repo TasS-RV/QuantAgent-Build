@@ -30,9 +30,8 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 
-import numpy as np
 import pandas as pd
 
 
@@ -116,7 +115,7 @@ def position_to_signal_arrays(pos: pd.Series):
 
 def vectorbt_available() -> bool:
     try:
-        import vectorbt  # noqa: F401
+        import vectorbt  # noqa: F401  (import-only probe)
         return True
     except Exception:
         return False

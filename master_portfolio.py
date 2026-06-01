@@ -315,8 +315,11 @@ def main() -> List[dict]:
     print(f"  Provider: {args.provider}  |  Tickers: {len(PORTFOLIO)}")
     print("=" * 72)
 
-    # Initialise TradingGraph once (shared LLM instances across tickers)
+    # Initialise TradingGraph once (shared LLM instances across tickers).
+    # ensure_initialized() raises a clear ValueError if the provider has no API
+    # key (rather than an AttributeError on a deferred/None graph_setup).
     trading_graph = TradingGraph(config=llm_config)
+    trading_graph.ensure_initialized()
 
     # Compile graph with the pure-math quant decision node
     compiled_graph = trading_graph.graph_setup.set_graph_quant(

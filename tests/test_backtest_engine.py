@@ -79,6 +79,17 @@ class TestBacktestEngine(unittest.TestCase):
         r = buy_hold_return(self.df, 0)
         self.assertGreater(r, 0)  # synthetic series rises 50 -> ~150
 
+    def test_trades_frame_satisfies_visualize_contract(self):
+        # visualize.py builds equity from decision_date/exit_date/pnl_pct columns
+        # of all_trades.json — guard that SimTrade keeps providing them.
+        from backtest_engine import trades_to_frame
+        reb = list(range(200, len(self.df) - 1, 10))
+        cfg = SimConfig(trend_filter=False, periods_per_year=52)
+        trades = simulate("T", self.df, [Signal(i, 1, 0.9, 2.0) for i in reb], cfg)["trades"]
+        tf = trades_to_frame(trades)
+        for col in ("decision_date", "exit_date", "pnl_pct"):
+            self.assertIn(col, tf.columns)
+
 
 if __name__ == "__main__":
     unittest.main()

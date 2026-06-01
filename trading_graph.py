@@ -297,6 +297,16 @@ class TradingGraph:
         """
         self._build_llms_and_graph()
 
+    def ensure_initialized(self):
+        """
+        Build the LLMs/graph if construction was deferred (no API key at start).
+        Raises a descriptive ValueError if a key is still missing — call this
+        before using ``self.graph`` so consumers get a clear message instead of
+        an AttributeError on a None graph.
+        """
+        if self.graph is None or self.graph_setup is None:
+            self._build_llms_and_graph()
+
     def update_api_key(self, api_key: str, provider: str = "openai"):
         """
         Update the API key in the config and refresh LLMs.

@@ -1,22 +1,20 @@
-import yfinance as yf
+import json
+
 import pandas as pd
+import yfinance as yf
 
-# Import the native modules from the QuantAgent repository - rather than needing to rebuild the prompts
-import static_util
-from trading_graph import TradingGraph
-from default_config import DEFAULT_CONFIG
+from trend_agent import quantify_trend_from_kline
 
-def test_native_trend_agent(symbol="NVDA", timeframe="1d", period="3mo"):
+REQUIRED_COLUMNS = ["Datetime", "Open", "High", "Low", "Close"]
+
+
+def _fetch_kline_data(symbol, timeframe, period, window, offset):
     print(f"Fetching {period} of {timeframe} data for {symbol}...")
-    
-    # 1. Fetch data directly using yfinance
-    df = yf.download(tickers=symbol, period=period, interval=timeframe, progress=False)
-    
-    if df.empty:
-        print("Error: No data fetched.")
-        return
 
-    # --- BULLETPROOF DATA CLEANING ---
+    df = yf.download(tickers=symbol, period=period, interval=timeframe, progress=False)
+    if df.empty:
+        raise ValueError("No data fetched.")
+
     if isinstance(df.columns, pd.MultiIndex):
         if "Close" in df.columns.get_level_values(0):
             df.columns = df.columns.get_level_values(0)
@@ -25,76 +23,53 @@ def test_native_trend_agent(symbol="NVDA", timeframe="1d", period="3mo"):
 
     df = df.reset_index()
     df = df.rename(columns={df.columns[0]: "Datetime"})
-    
-    required_columns = ["Datetime", "Open", "High", "Low", "Close"]
-    
-    # Safety check
-    missing_cols = [col for col in required_columns if col not in df.columns]
-    if missing_cols:
-        print(f"Failed to parse yfinance data. Missing: {missing_cols}")
-        return
-        
-    df = df[required_columns]
+    df = df[REQUIRED_COLUMNS]
 
-    # Slice the last 45 candles for the tool input
-    df_slice = df.tail(45).reset_index(drop=True)
+    if offset > 0:
+        df_slice = df.iloc[-(window + offset) : -offset].reset_index(drop=True)
+    else:
+        df_slice = df.tail(window).reset_index(drop=True)
 
-    # Convert to the dictionary format the tools expect
-    df_slice_dict = {}
-    for col in required_columns:
+    if len(df_slice) < window:
+        print(f"Warning: Only {len(df_slice)} candles available for this slice (requested {window}).")
+
+    kline_data = {}
+    for col in REQUIRED_COLUMNS:
         if col == "Datetime":
-            df_slice_dict[col] = df_slice[col].dt.strftime("%Y-%m-%d %H:%M:%S").tolist()
+            kline_data[col] = df_slice[col].dt.strftime("%Y-%m-%d %H:%M:%S").tolist()
         else:
-            df_slice_dict[col] = df_slice[col].tolist()
+            kline_data[col] = df_slice[col].tolist()
 
-    print("Generating tool images (Kline & Trend)...")
-    # 2. Use the repository's native tools directly
-    p_image = static_util.generate_kline_image(df_slice_dict)
-    t_image = static_util.generate_trend_image(df_slice_dict)
+    return kline_data
 
-    # 3. Construct the initial state
-    initial_state = {
-        "kline_data": df_slice_dict,
-        "analysis_results": None,
-        "messages": [],
-        "time_frame": timeframe,
-        "stock_name": symbol,
-        "pattern_image": p_image.get("pattern_image"),
-        "trend_image": t_image.get("trend_image"), # Critical for the Trend Agent
-    }
 
-    # 4. CONFIGURE GRAPH FOR GOOGLE GEMINI
-    print("Initializing native TradingGraph with Gemini...")
-    my_config = DEFAULT_CONFIG.copy()
-    
-    # Tell the graph to use the Google integration
-    my_config["agent_llm_provider"] = "google"
-    my_config["graph_llm_provider"] = "google"
-    
-    # Using flash for both to prevent Rate Limits
-    my_config["agent_llm_model"] = "gemini-2.5-flash-lite"
-    my_config["graph_llm_model"] = "gemini-2.5-flash-lite"
-
-    # Initialize the graph
-    graph_engine = TradingGraph(config=my_config)
-    
-    print("Running LangGraph pipeline... (Extracting Trend Report)")
-    
-    # 5. Invoke the graph
+def run_trend_agent(symbol="NVDA", timeframe="1d", period="3mo", window=45, offset=0):
+    """
+    Standalone runner for trend quantification outside the LangChain pipeline.
+    Fetches market data and delegates all trend math to trend_agent.
+    """
     try:
-        final_state = graph_engine.graph.invoke(initial_state)
-        
-        # Extract the qualitative trend report
-        trend_report = final_state.get("trend_report")
-        
-        print("\n" + "="*60)
-        print(f"=== NATIVE TREND REPORT FOR {symbol} ===")
-        print("="*60 + "\n")
-        print(trend_report)
-        print("\n" + "="*60)
-        
+        kline_data = _fetch_kline_data(symbol, timeframe, period, window, offset)
+        metrics = quantify_trend_from_kline(kline_data)
+
+        print("\n" + "=" * 60)
+        print(f"=== MATHEMATICAL TREND METRICS ({symbol}) ===")
+        print("=" * 60)
+        print(json.dumps(metrics, indent=4))
+        print("=" * 60 + "\n")
+
+        return metrics
     except Exception as e:
         print(f"An error occurred during execution: {e}")
+        return None
+
 
 if __name__ == "__main__":
-    test_native_trend_agent(symbol="BTC-USD", timeframe="1d", period="3mo")
+    # window = Size of the trend channel (default 45)
+    # offset = How many candles backward to shift the end date (0 = today)
+
+    # Example 1: Run on the current most recent 45 days
+    # run_trend_agent(symbol="BTC-USD", timeframe="1d", period="3mo", window=45, offset=0)
+
+    # Example 2: Backtest a 45-day trend from exactly 14 days ago
+    run_trend_agent(symbol="GOOG", timeframe="1d", period="1mo", window=10, offset=5)

@@ -4,6 +4,7 @@ Initializes LLMs, toolkits, and agent nodes for indicator, pattern, and trend an
 """
 
 import os
+from pathlib import Path
 from typing import Dict
 
 from langchain_anthropic import ChatAnthropic
@@ -151,31 +152,25 @@ class TradingGraph:
                     "Please provide your actual Qwen API key. "
                     "You can get one from: https://dashscope.console.aliyun.com/"
                 )
-        # Provider gor google gemini added - hardcoded based on API key storage in manual location
         elif provider == "google":
-            # 1. Check if passed via config dictionary
             api_key = self.config.get("google_api_key")
-            
-            # 2. Check environment variables
+
             if not api_key:
                 api_key = os.environ.get("GOOGLE_API_KEY")
-                
-            # 3. Check your specific local text file
+
             if not api_key:
-                try:
-                    key_path = os.path.abspath(os.path.join(os.getcwd(), '..', 'Gemini_API.txt'))
-                    with open(key_path, "r") as file:
-                        api_key = file.read().strip()
-                except FileNotFoundError:
-                    pass # Fails silently here so the ValueError below can handle it
-                
-            # 4. Final validation
+                key_path = Path(__file__).resolve().parent.parent / "Gemini_API.txt"
+                if key_path.is_file():
+                    api_key = key_path.read_text(encoding="utf-8").strip()
+
             if not api_key:
                 raise ValueError(
-                    "Google API key not found. Please ensure your key is saved at: \n"
-                    f"{os.path.abspath(os.path.join(os.getcwd(), '..', 'Gemini_API.txt'))}"
+                    "Google API key not found. Please set it using one of these methods:\n"
+                    "1. Save your key to: "
+                    f"{Path(__file__).resolve().parent.parent / 'Gemini_API.txt'}\n"
+                    "2. Set environment variable: export GOOGLE_API_KEY='your-key-here'\n"
+                    "3. Update the config with: config['google_api_key'] = 'your-key-here'"
                 )
-         
 
 
         elif provider in MINIMAX_PROVIDER_CONFIG:

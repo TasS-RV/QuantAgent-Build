@@ -163,7 +163,8 @@ def send_telegram(message: str) -> bool:
         return False
     url = f"https://api.telegram.org/bot{keys.get('bot_token')}/sendMessage"
     resp = requests.post(url, json={"chat_id": keys.get("chat_id"),
-                                    "text": message, "parse_mode": "Markdown"})
+                                    "text": message, "parse_mode": "Markdown"},
+                         timeout=15)
     if resp.status_code == 200:
         print("🚀 Portfolio update pushed to Telegram.")
         return True

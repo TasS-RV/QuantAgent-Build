@@ -91,8 +91,16 @@ def analyse_holdings(
     lookback_days: int = 120,
     interval: str = "1d",
     allow_short: bool = True,
+    sentiment_weight: float = 0.0,
+    sentiment_scorer: Optional[Callable] = None,
 ) -> List[dict]:
-    """Run the deterministic decision for each holding. Returns a list of dicts."""
+    """
+    Run the deterministic decision for each holding. Returns a list of dicts.
+
+    If sentiment_weight > 0, a FinBERT sentiment overlay (issue #5) is blended
+    into each decision. Degrades gracefully (no change) if transformers/torch
+    or news are unavailable. `sentiment_scorer` is injectable for tests.
+    """
     from quant_signal import compute_quant_decision
     results = []
     for h in holdings:
@@ -100,6 +108,11 @@ def analyse_holdings(
             kline = fetch_fn(h.symbol, lookback_days, interval)
             dec = compute_quant_decision(h.symbol, kline, entry_price=h.entry_price,
                                          allow_short=allow_short)
+            if sentiment_weight > 0:
+                from sentiment_agent import apply_sentiment, score_symbol_sentiment
+                sent = score_symbol_sentiment(h.symbol, scorer=sentiment_scorer)
+                dec = apply_sentiment(dec, sent, sentiment_weight=sentiment_weight,
+                                      allow_short=allow_short)
             results.append({
                 "symbol": h.symbol, "is_etf": h.is_etf, "decision": dec.decision,
                 "combined_signal": dec.combined_signal, "current_price": dec.current_price,
@@ -165,8 +178,9 @@ def send_telegram(message: str) -> bool:
 def run_once(holdings: List[Holding], fetch_fn=fetch_kline_yf,
              send_fn: Optional[Callable[[str], bool]] = send_telegram,
              lookback_days: int = 120, interval: str = "1d",
-             allow_short: bool = True) -> List[dict]:
-    results = analyse_holdings(holdings, fetch_fn, lookback_days, interval, allow_short)
+             allow_short: bool = True, sentiment_weight: float = 0.0) -> List[dict]:
+    results = analyse_holdings(holdings, fetch_fn, lookback_days, interval, allow_short,
+                               sentiment_weight=sentiment_weight)
     msg = format_telegram_message(results)
     print(msg)
     if send_fn is not None:
@@ -197,6 +211,8 @@ def main():
     p.add_argument("--no-short", action="store_true", help="Long-only recommendations")
     p.add_argument("--lookback-days", type=int, default=120)
     p.add_argument("--interval-bars", default="1d", help="yfinance bar interval (1d, 1h, ...)")
+    p.add_argument("--sentiment-weight", type=float, default=0.0,
+                   help="Blend FinBERT news sentiment into decisions (0 disables; e.g. 0.2)")
     args = p.parse_args()
 
     def get_holdings() -> List[Holding]:
@@ -208,7 +224,7 @@ def main():
 
     send_fn = None if args.no_telegram else send_telegram
     kwargs = dict(lookback_days=args.lookback_days, interval=args.interval_bars,
-                  allow_short=not args.no_short)
+                  allow_short=not args.no_short, sentiment_weight=args.sentiment_weight)
 
     if args.once:
         run_once(get_holdings(), send_fn=send_fn, **kwargs)

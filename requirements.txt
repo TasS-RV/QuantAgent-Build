@@ -43,3 +43,8 @@ pysqlite3-binary
 # Optional: VectorBT backend for validate_vectorbt.py (issue #4). Heavy (numba); the
 # script falls back to the built-in deterministic engine if this is not installed.
 # vectorbt
+
+# Optional: FinBERT news-sentiment overlay (issue #5, sentiment_agent.py). Heavy
+# (downloads ProsusAI/finbert). The overlay degrades to neutral if these are absent.
+# transformers
+# torch

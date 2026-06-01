@@ -77,7 +77,6 @@ _CDL_PATTERNS = [
     ("Harami",             lambda o,h,l,c: talib.CDLHARAMI(o,h,l,c)),
     ("Marubozu",           lambda o,h,l,c: talib.CDLMARUBOZU(o,h,l,c)),
     ("Doji",               lambda o,h,l,c: talib.CDLDOJI(o,h,l,c)),
-    ("Engulfing",          lambda o,h,l,c: talib.CDLENGULFING(o,h,l,c)),
     ("AbandonedBaby",      lambda o,h,l,c: talib.CDLABANDONEDBABY(o,h,l,c)),
 ]
 

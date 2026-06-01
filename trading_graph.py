@@ -47,8 +47,30 @@ class TradingGraph:
     def __init__(self, config=None):
         # --- Configuration and LLMs ---
         self.config = config if config is not None else DEFAULT_CONFIG.copy()
+        self.toolkit = TechnicalTools()
+        self.agent_llm = None
+        self.graph_llm = None
+        self.graph_setup = None
+        self.graph = None
 
-        # Initialize LLMs with provider support
+        # Build the LLMs + graph. If no API key is configured yet (common on a
+        # fresh start before the user enters one in the web UI), defer instead of
+        # crashing — refresh_llms() will build them once a key is available.
+        try:
+            self._build_llms_and_graph()
+        except ValueError as e:
+            print(
+                f"⚠️  TradingGraph: LLMs not initialised yet ({e}). "
+                "Set an API key (env var, config, or the web UI) and the graph "
+                "will be built automatically when the provider/key is updated."
+            )
+
+    def _build_llms_and_graph(self):
+        """(Re)create the LLMs and the LangGraph graph from the current config.
+
+        Raises ValueError if the selected provider has no API key — callers that
+        want to tolerate that (e.g. __init__) must catch it.
+        """
         self.agent_llm = self._create_llm(
             provider=self.config.get("agent_llm_provider", "openai"),
             model=self.config.get("agent_llm_model", "gpt-4o-mini"),
@@ -59,20 +81,11 @@ class TradingGraph:
             model=self.config.get("graph_llm_model", "gpt-4o"),
             temperature=self.config.get("graph_llm_temperature", 0.1),
         )
-        self.toolkit = TechnicalTools()
-
-        # --- Create tool nodes for each agent ---
-        # self.tool_nodes = self._set_tool_nodes()
-
-        # --- Graph logic and setup ---
         self.graph_setup = SetGraph(
             self.agent_llm,
             self.graph_llm,
             self.toolkit,
-            # self.tool_nodes,
         )
-
-        # --- The main LangGraph graph object ---
         self.graph = self.graph_setup.set_graph()
 
     def _get_api_key(self, provider: str = "openai") -> str:
@@ -279,30 +292,20 @@ class TradingGraph:
     def refresh_llms(self):
         """
         Refresh the LLM objects with the current API key from environment.
-        This is called when the API key is updated.
+        This is called when the API key is updated. Raises ValueError if the
+        selected provider still has no API key (the web UI uses this to prompt).
         """
-        # Recreate LLM objects with current config values
-        self.agent_llm = self._create_llm(
-            provider=self.config.get("agent_llm_provider", "openai"),
-            model=self.config.get("agent_llm_model", "gpt-4o-mini"),
-            temperature=self.config.get("agent_llm_temperature", 0.1),
-        )
-        self.graph_llm = self._create_llm(
-            provider=self.config.get("graph_llm_provider", "openai"),
-            model=self.config.get("graph_llm_model", "gpt-4o"),
-            temperature=self.config.get("graph_llm_temperature", 0.1),
-        )
+        self._build_llms_and_graph()
 
-        # Recreate the graph setup with new LLMs
-        self.graph_setup = SetGraph(
-            self.agent_llm,
-            self.graph_llm,
-            self.toolkit,
-            # self.tool_nodes,
-        )
-
-        # Recreate the main graph
-        self.graph = self.graph_setup.set_graph()
+    def ensure_initialized(self):
+        """
+        Build the LLMs/graph if construction was deferred (no API key at start).
+        Raises a descriptive ValueError if a key is still missing — call this
+        before using ``self.graph`` so consumers get a clear message instead of
+        an AttributeError on a None graph.
+        """
+        if self.graph is None or self.graph_setup is None:
+            self._build_llms_and_graph()
 
     def update_api_key(self, api_key: str, provider: str = "openai"):
         """

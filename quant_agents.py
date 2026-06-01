@@ -6,7 +6,7 @@ import asyncio
 import json
 import os
 from dataclasses import dataclass
-from typing import Any, Literal
+from typing import Literal
 
 from agents import Agent, ModelSettings, Runner
 from pydantic import BaseModel, Field
@@ -45,7 +45,7 @@ class TrendReport(BaseModel):
 
 
 class TradeDecision(BaseModel):
-    decision: Literal["LONG", "SHORT"]
+    decision: Literal["LONG", "SHORT", "HOLD"]
     confidence: float = Field(ge=0.0, le=1.0)
     risk_reward_ratio: float = Field(ge=1.0, le=3.0)
     justification: str
@@ -111,8 +111,10 @@ def make_decision_agent(model: str, temperature: float = 0.0) -> Agent:
         model=model,
         model_settings=_model_settings(temperature),
         instructions=(
-            "You are a high-frequency quantitative trader. Based on the three reports below, issue an "
-            "IMMEDIATE LONG or SHORT order. HOLD is NOT permitted. "
+            "You are a high-frequency quantitative trader. Based on the three reports below, issue a "
+            "LONG, SHORT, or HOLD decision. "
+            "Choose HOLD when the three reports disagree or none shows a clear edge — do not force a "
+            "trade when there is no signal. Only go LONG or SHORT when at least two reports align. "
             "Weight signals as follows: prioritize alignment across all three reports; require "
             "confirmation for pattern signals; use trendline slope when reports disagree. "
             "Suggest a risk-reward ratio between 1.2 and 1.8 based on signal strength."

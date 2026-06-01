@@ -10,8 +10,9 @@ import json
 import numpy as np
 import pandas as pd
 import talib
-from langchain_core.messages import HumanMessage, ToolMessage
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+
+# langchain_core is imported lazily inside create_indicator_agent (the LLM node) so the
+# quantify_* math helpers only require numpy / pandas / talib — not the LLM SDK.
 
 COMPONENT_LABELS = {
     "rsi_signal": "RSI (14)",
@@ -282,6 +283,8 @@ def create_indicator_agent(llm, toolkit):
     """
     Create an indicator analysis agent node for HFT. The agent uses LLM and indicator tools to analyze OHLCV data.
     """
+    from langchain_core.messages import HumanMessage, ToolMessage
+    from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
     def indicator_agent_node(state):
         tools = [

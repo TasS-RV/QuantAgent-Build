@@ -628,5 +628,54 @@ class TestProviderSwitchBackToOpenAI(unittest.TestCase):
         self.assertEqual(analyzer.config["graph_llm_model"], "gpt-4o")
 
 
+class TestKeylessStartup(unittest.TestCase):
+    """TradingGraph should construct without crashing when no API key is set yet
+    (so the web UI can boot and let the user enter a key), then build on refresh."""
+
+    def _no_key_config(self):
+        cfg = DEFAULT_CONFIG.copy()
+        cfg["agent_llm_provider"] = "google"
+        cfg["graph_llm_provider"] = "google"
+        cfg["google_api_key"] = ""
+        cfg["api_key"] = ""
+        return cfg
+
+    def test_construct_without_key_defers(self):
+        from trading_graph import TradingGraph
+        saved = os.environ.pop("GOOGLE_API_KEY", None)
+        try:
+            tg = TradingGraph(config=self._no_key_config())   # must not raise
+            self.assertIsNone(tg.graph)
+            self.assertIsNone(tg.agent_llm)
+        finally:
+            if saved is not None:
+                os.environ["GOOGLE_API_KEY"] = saved
+
+    def test_refresh_builds_once_key_present(self):
+        from trading_graph import TradingGraph
+        saved = os.environ.pop("GOOGLE_API_KEY", None)
+        try:
+            tg = TradingGraph(config=self._no_key_config())
+            self.assertIsNone(tg.graph)
+            tg.config["google_api_key"] = "test-key"
+            tg.refresh_llms()                                  # now has a key
+            self.assertIsNotNone(tg.graph)
+            self.assertIsNotNone(tg.agent_llm)
+        finally:
+            if saved is not None:
+                os.environ["GOOGLE_API_KEY"] = saved
+
+    def test_refresh_without_key_raises(self):
+        from trading_graph import TradingGraph
+        saved = os.environ.pop("GOOGLE_API_KEY", None)
+        try:
+            tg = TradingGraph(config=self._no_key_config())
+            with self.assertRaises(ValueError):
+                tg.refresh_llms()                              # still no key -> raises
+        finally:
+            if saved is not None:
+                os.environ["GOOGLE_API_KEY"] = saved
+
+
 if __name__ == "__main__":
     unittest.main()

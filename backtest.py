@@ -6,7 +6,6 @@ import argparse
 import asyncio
 import json
 import sys
-from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Iterable
 
@@ -25,6 +24,7 @@ from tqdm import tqdm
 
 import indicators  # noqa: F401  (warms up pandas-ta)
 from quant_agents import run_pipeline_async
+from backtest_engine import Signal, SimConfig, simulate, run_with_baselines, trades_to_frame
 
 
 TOP10_USA = [
@@ -33,6 +33,13 @@ TOP10_USA = [
 ]
 
 WINDOW_BARS = 60  # bars of history fed to the agent at each decision point
+
+# Approximate rebalance periods per year, by cadence — used to annualize Sharpe.
+_CADENCE_PPY = {"D": 252.0, "DAILY": 252.0, "W-FRI": 52.0, "W": 52.0, "M": 12.0, "ME": 12.0}
+
+
+def _periods_per_year(cadence: str) -> float:
+    return _CADENCE_PPY.get(cadence.upper(), 52.0)
 
 
 # ---------- Data ----------
@@ -83,79 +90,55 @@ def window_to_kline(df: pd.DataFrame, end_idx: int, window: int = WINDOW_BARS) -
     }
 
 
-# ---------- Backtest engine ----------
+# ---------- Signal collection (LLM, non-deterministic) ----------
 
-@dataclass
-class Trade:
-    symbol: str
-    decision_date: str
-    direction: int           # +1 long, -1 short
-    entry_price: float
-    exit_price: float
-    exit_date: str
-    confidence: float
-    pnl_pct: float           # signed return on the position
-    justification: str
-
-
-async def _decision_for_bar(symbol: str, df: pd.DataFrame, end_idx: int) -> tuple[int, float, str]:
+async def _signal_for_bar(symbol: str, df: pd.DataFrame, end_idx: int) -> tuple[int, int, float, float, str]:
+    """Run the LLM pipeline at one decision bar. Returns (idx, direction, conf, rr, justification)."""
     kline = window_to_kline(df, end_idx)
     try:
         result = await run_pipeline_async(symbol, kline, timeframe="1d")
-        direction = 1 if result.decision.decision == "LONG" else -1
-        return direction, float(result.decision.confidence), result.decision.justification
+        direction = {"LONG": 1, "SHORT": -1, "HOLD": 0}.get(result.decision.decision, 0)
+        return (end_idx, direction, float(result.decision.confidence),
+                float(result.decision.risk_reward_ratio), result.decision.justification)
     except Exception as e:
-        return 0, 0.0, f"ERROR: {type(e).__name__}: {e}"
+        return end_idx, 0, 0.0, 2.0, f"ERROR: {type(e).__name__}: {e}"
 
 
-async def backtest_symbol(
+async def collect_signals(
     symbol: str,
     df: pd.DataFrame,
     rebalance_idxs: list[int],
     concurrency: int = 4,
-) -> list[Trade]:
+) -> list[Signal]:
+    """Collect the agent's raw signals at each rebalance bar (the expensive LLM step)."""
     sem = asyncio.Semaphore(concurrency)
 
-    async def decide(idx: int) -> tuple[int, int, float, str]:
+    async def one(idx: int):
         async with sem:
-            d, c, j = await _decision_for_bar(symbol, df, idx)
-            return idx, d, c, j
+            return await _signal_for_bar(symbol, df, idx)
 
-    tasks = [decide(i) for i in rebalance_idxs]
-    results = await atqdm.gather(
-        *tasks,
-        desc=f"  {symbol:<6} decisions",
+    raw = await atqdm.gather(
+        *[one(i) for i in rebalance_idxs],
+        desc=f"  {symbol:<6} signals",
         unit="bar",
         leave=False,
         dynamic_ncols=True,
     )
-    results.sort(key=lambda r: r[0])
-
-    trades: list[Trade] = []
-    for k, (idx, direction, conf, just) in enumerate(results):
-        if direction == 0:
-            continue
-        # Enter at next bar's open, exit at the bar following the next rebalance point's close.
-        entry_idx = idx + 1
-        exit_idx = results[k + 1][0] + 1 if k + 1 < len(results) else len(df) - 1
-        if entry_idx >= len(df) or exit_idx >= len(df) or exit_idx <= entry_idx:
-            continue
-        entry = float(df["Open"].iloc[entry_idx])
-        exit_ = float(df["Open"].iloc[exit_idx])
-        pnl = direction * (exit_ - entry) / entry
-        trades.append(Trade(
-            symbol=symbol,
-            decision_date=str(df["Datetime"].iloc[idx].date()),
+    raw.sort(key=lambda r: r[0])
+    return [
+        Signal(
+            decision_idx=idx,
             direction=direction,
-            entry_price=entry,
-            exit_price=exit_,
-            exit_date=str(df["Datetime"].iloc[exit_idx].date()),
             confidence=conf,
-            pnl_pct=pnl,
-            justification=just[:300],
-        ))
-    return trades
+            risk_reward_ratio=rr,
+            date=str(df["Datetime"].iloc[idx].date()),
+            note=just[:200],
+        )
+        for idx, direction, conf, rr, just in raw
+    ]
 
+
+# ---------- Backtest orchestration (deterministic engine: backtest_engine.py) ----------
 
 async def backtest_universe(
     symbols: Iterable[str],
@@ -163,12 +146,25 @@ async def backtest_universe(
     cadence: str = "W-FRI",
     concurrency: int = 4,
     out_dir: Path | str = "backtest_results",
+    cfg: SimConfig | None = None,
+    oos_start: str | None = None,
 ) -> dict:
+    """
+    Collect agent signals per symbol, then run the deterministic backtest engine
+    (with risk overlays + costs) and trivial baselines for comparison.
+
+    oos_start: optional 'YYYY-MM-DD' — also reports agent metrics on the
+    out-of-sample slice (decisions on/after that date) to detect overfitting.
+    """
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
+    cfg = cfg or SimConfig(periods_per_year=_periods_per_year(cadence))
 
-    all_trades: dict[str, list[Trade]] = {}
+    all_signals: dict[str, list[Signal]] = {}
     histories: dict[str, pd.DataFrame] = {}
+    summary_rows: list[dict] = []
+    baseline_rows: list[dict] = []
+
     symbols = list(symbols)
     sym_bar = tqdm(symbols, desc="symbols", unit="sym", dynamic_ncols=True)
     for symbol in sym_bar:
@@ -178,56 +174,83 @@ async def backtest_universe(
         sym_bar.set_postfix_str(f"{symbol}: {len(df)}b / {len(idxs)} decisions")
         histories[symbol] = df
 
-        trades = await backtest_symbol(symbol, df, idxs, concurrency=concurrency)
-        all_trades[symbol] = trades
+        signals = await collect_signals(symbol, df, idxs, concurrency=concurrency)
+        all_signals[symbol] = signals
+
+        sim = simulate(symbol, df, signals, cfg)
+        trades = sim["trades"]
+        m = sim["metrics"]
+        bl = run_with_baselines(symbol, df, signals, idxs, cfg)
 
         # Persist per-symbol trade log
-        pd.DataFrame([asdict(t) for t in trades]).to_csv(
-            out_dir / f"{symbol}_trades.csv", index=False
-        )
-        mean_pnl = (sum(t.pnl_pct for t in trades) / len(trades) * 100) if trades else 0.0
-        sym_bar.write(f"[{symbol}] {len(trades)} trades, mean PnL/trade = {mean_pnl:+.3f}%")
+        trades_to_frame(trades).to_csv(out_dir / f"{symbol}_trades.csv", index=False)
 
-    # Build a unified summary
-    summary_rows = []
-    for sym, trades in all_trades.items():
-        df = histories[sym]
-        bh_ret = (df["Close"].iloc[-1] / df["Close"].iloc[0]) - 1.0
-        if trades:
-            returns = pd.Series([t.pnl_pct for t in trades])
-            equity = (1 + returns).cumprod()
-            total_ret = equity.iloc[-1] - 1.0
-            sharpe = (returns.mean() / returns.std() * (52 ** 0.5)) if returns.std() else 0.0
-            win_rate = float((returns > 0).mean())
-            mdd = float(((equity.cummax() - equity) / equity.cummax()).max())
-        else:
-            total_ret = 0.0
-            sharpe = 0.0
-            win_rate = 0.0
-            mdd = 0.0
-        summary_rows.append({
-            "symbol": sym,
-            "n_trades": len(trades),
-            "agent_total_return": total_ret,
-            "buy_hold_return": float(bh_ret),
-            "excess_return": total_ret - float(bh_ret),
-            "sharpe_annual": sharpe,
-            "win_rate": win_rate,
-            "max_drawdown": mdd,
+        row = {
+            "symbol": symbol,
+            "n_trades": m["n_trades"],
+            "n_long": m["n_long"],
+            "n_short": m["n_short"],
+            "agent_total_return": m["total_return"],
+            "buy_hold_return": bl["buy_hold_return"],
+            "excess_return": m["total_return"] - bl["buy_hold_return"],
+            "sharpe_annual": m["sharpe_annual"],
+            "win_rate": m["win_rate"],
+            "max_drawdown": m["max_drawdown"],
+        }
+        # Out-of-sample slice
+        if oos_start:
+            oos_sigs = [s for s in signals if s.date and s.date >= oos_start]
+            oos_m = simulate(symbol, df, oos_sigs, cfg)["metrics"]
+            row["oos_total_return"] = oos_m["total_return"]
+            row["oos_sharpe"] = oos_m["sharpe_annual"]
+            row["oos_win_rate"] = oos_m["win_rate"]
+        summary_rows.append(row)
+
+        baseline_rows.append({
+            "symbol": symbol,
+            "agent": m["total_return"],
+            "buy_hold": bl["buy_hold_return"],
+            "always_long": bl["always_long"]["total_return"],
+            "sma_trend_follower": bl["sma_trend_follower"]["total_return"],
+            "random": bl["random"]["total_return"],
+            "beats_sma_baseline": m["total_return"] > bl["sma_trend_follower"]["total_return"],
         })
+
+        sym_bar.write(
+            f"[{symbol}] {m['n_trades']} trades "
+            f"({m['n_long']}L/{m['n_short']}S) | agent {m['total_return']:+.1%} "
+            f"vs B&H {bl['buy_hold_return']:+.1%} vs 200dma {bl['sma_trend_follower']['total_return']:+.1%}"
+        )
 
     summary_df = pd.DataFrame(summary_rows)
     summary_df.to_csv(out_dir / "summary.csv", index=False)
+    baseline_df = pd.DataFrame(baseline_rows)
+    baseline_df.to_csv(out_dir / "baselines.csv", index=False)
 
-    # Persist combined trades JSON for the visualizer
-    combined = {sym: [asdict(t) for t in trades] for sym, trades in all_trades.items()}
-    (out_dir / "all_trades.json").write_text(json.dumps(combined, indent=2))
-
-    # Persist histories for the visualizer
+    # Persist signals + histories for the visualizer / vectorbt validation
+    combined = {
+        sym: [
+            {"decision_idx": s.decision_idx, "direction": s.direction,
+             "confidence": s.confidence, "risk_reward_ratio": s.risk_reward_ratio,
+             "date": s.date, "note": s.note}
+            for s in sigs
+        ]
+        for sym, sigs in all_signals.items()
+    }
+    (out_dir / "all_signals.json").write_text(json.dumps(combined, indent=2))
     for sym, df in histories.items():
         df.to_csv(out_dir / f"{sym}_history.csv", index=False)
 
-    return {"summary": summary_df, "trades": all_trades, "histories": histories}
+    # Console verdict vs the 200dma baseline (roadmap pass/fail gate)
+    if not baseline_df.empty:
+        n_beat = int(baseline_df["beats_sma_baseline"].sum())
+        print(f"\nAgent beats 200dma trend-follower on {n_beat}/{len(baseline_df)} symbols.")
+        if n_beat <= len(baseline_df) / 2:
+            print("⚠️  Agent does NOT cleanly beat the dumb 200dma baseline — "
+                  "do not add complexity until it does (see docs/BACKTEST_IMPROVEMENT_ROADMAP.md).")
+
+    return {"summary": summary_df, "baselines": baseline_df,
+            "signals": all_signals, "histories": histories}
 
 
 def main():
@@ -238,7 +261,31 @@ def main():
                         help="Pandas resample alias (W-FRI=weekly Friday, M=monthly). Use 'D' for daily.")
     parser.add_argument("--concurrency", type=int, default=4)
     parser.add_argument("--out", default="backtest_results")
+    # Risk overlays (roadmap Tier 1 & 2)
+    parser.add_argument("--no-trend-filter", action="store_true",
+                        help="Disable the 200dma trend filter (default: on)")
+    parser.add_argument("--no-stops", action="store_true",
+                        help="Disable ATR stop/target exits; hold to next rebalance")
+    parser.add_argument("--confidence-gate", type=float, default=0.0,
+                        help="Drop signals below this confidence (e.g. 0.75); 0 disables")
+    parser.add_argument("--atr-mult", type=float, default=1.5, help="ATR multiple for stop distance")
+    parser.add_argument("--commission", type=float, default=0.0002, help="Commission per side")
+    parser.add_argument("--slippage", type=float, default=0.0005, help="Slippage per side")
+    parser.add_argument("--no-short", action="store_true", help="Long-only (drop SHORT signals)")
+    parser.add_argument("--oos-start", default=None,
+                        help="Report out-of-sample metrics for decisions on/after YYYY-MM-DD")
     args = parser.parse_args()
+
+    cfg = SimConfig(
+        commission=args.commission,
+        slippage=args.slippage,
+        trend_filter=not args.no_trend_filter,
+        confidence_gate=args.confidence_gate,
+        use_atr_stops=not args.no_stops,
+        atr_mult=args.atr_mult,
+        allow_short=not args.no_short,
+        periods_per_year=_periods_per_year(args.cadence),
+    )
 
     asyncio.run(backtest_universe(
         symbols=args.symbols,
@@ -246,6 +293,8 @@ def main():
         cadence=args.cadence,
         concurrency=args.concurrency,
         out_dir=args.out,
+        cfg=cfg,
+        oos_start=args.oos_start,
     ))
 
 

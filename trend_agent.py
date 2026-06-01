@@ -4,8 +4,10 @@ import copy
 import numpy as np
 from scipy.stats import linregress
 
-from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
-from openai import RateLimitError
+# NOTE: langchain_core / openai are imported lazily inside the LLM-only helpers
+# (invoke_with_retry, create_trend_agent) so the pure-math quant functions in this
+# module (quantify_trend_strength / quantify_trend_from_kline) can be imported and
+# used with only numpy + scipy — no LLM SDK required.
 
 
 # --- Retry wrapper for LLM invocation ---
@@ -13,6 +15,11 @@ def invoke_with_retry(call_fn, *args, retries=3, wait_sec=4):
     """
     Retry a function call with exponential backoff for rate limits or errors.
     """
+    try:
+        from openai import RateLimitError
+    except ImportError:  # openai not installed — treat as a generic retryable error
+        RateLimitError = ()
+
     for attempt in range(retries):
         try:
             result = call_fn(*args)
@@ -94,9 +101,10 @@ def quantify_trend_from_kline(kline_data):
 
 def create_trend_agent(tool_llm, graph_llm, toolkit):
     """
-    Create a trend analysis agent node for HFT. 
+    Create a trend analysis agent node for HFT.
     Combines LLM visual analysis with rigid Scipy Linear Regression mathematics.
     """
+    from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 
     def trend_agent_node(state):
         # --- Tool definitions ---

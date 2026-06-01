@@ -39,3 +39,7 @@ tqdm
 
 # Optional: required on systems missing a stdlib _sqlite3 build (yfinance caches via sqlite)
 pysqlite3-binary
+
+# Optional: VectorBT backend for validate_vectorbt.py (issue #4). Heavy (numba); the
+# script falls back to the built-in deterministic engine if this is not installed.
+# vectorbt

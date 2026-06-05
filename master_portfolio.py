@@ -86,6 +86,11 @@ DECISION_CONFIG: dict = {
 # Overridden at runtime by the --no-llm CLI flag.
 NO_LLM_MODE = True
 
+# Set True to save per-ticker charts after each run.
+# Output: charts/<TICKER>/pattern.png, trend.png, indicators.html
+SAVE_CHARTS = True
+CHARTS_DIR  = "charts"
+
 DEFAULT_LLM_PROVIDER = "featherless"   # openai | anthropic | qwen | minimax | google | featherless
 
 GEMINI_KEY_FILE = Path(__file__).resolve().parent.parent / "Gemini_API.txt"
@@ -288,6 +293,38 @@ def print_signal_breakdown(decisions: List[dict]) -> None:
         )
 
 
+def _save_ticker_charts(ticker: str, kline_data: dict) -> None:
+    """Generate and save pattern, trend, and indicator charts for a ticker."""
+    import charts as _charts
+    from indicator_agent import visualize_indicator_signals, _kline_to_dataframe
+
+    out = Path(CHARTS_DIR) / ticker
+    out.mkdir(parents=True, exist_ok=True)
+
+    try:
+        _charts.generate_kline_image(kline_data, save_path=str(out / "pattern.png"))
+        print(f"  Chart: {out / 'pattern.png'}")
+    except Exception as e:
+        print(f"  [WARN] Pattern chart failed: {e}")
+
+    try:
+        _charts.generate_trend_image(kline_data, save_path=str(out / "trend.png"))
+        print(f"  Chart: {out / 'trend.png'}")
+    except Exception as e:
+        print(f"  [WARN] Trend chart failed: {e}")
+
+    try:
+        df = _kline_to_dataframe(kline_data)
+        visualize_indicator_signals(
+            df, ticker,
+            save_path=str(out / "indicators.html"),
+            show_plot=False,
+        )
+        print(f"  Chart: {out / 'indicators.html'}")
+    except Exception as e:
+        print(f"  [WARN] Indicator chart failed: {e}")
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 #  CLI
 # ─────────────────────────────────────────────────────────────────────────────
@@ -438,6 +475,10 @@ def main() -> List[dict]:
             f"  {_DECISION_BADGE.get(dec, dec)}  signal={sig:+.3f} [{strg}]  "
             f"price={cp:.4f}  target={tp:.4f}  SL={sl:.4f}  PnL={pnl_str}"
         )
+
+        # 5. Generate charts
+        if SAVE_CHARTS:
+            _save_ticker_charts(ticker, kline_data)
 
     # ── Summary table ──────────────────────────────────────────────────────
     if all_results:

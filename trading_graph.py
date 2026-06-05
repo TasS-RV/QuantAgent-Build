@@ -19,7 +19,7 @@ from graph_setup import SetGraph
 from graph_util import TechnicalTools
 
 
-SUPPORTED_PROVIDERS = ("openai", "anthropic", "qwen", "minimax", "minimax_cn", "google")
+SUPPORTED_PROVIDERS = ("openai", "anthropic", "qwen", "minimax", "minimax_cn", "google", "featherless")
 MINIMAX_PROVIDER_CONFIG = {
     "minimax": {
         "label": "MiniMax",
@@ -214,9 +214,27 @@ class TradingGraph:
                     f"Please provide your actual {provider_config['label']} API key. "
                     f"You can get one from: {provider_config['console_url']}"
                 )
+        elif provider == "featherless":
+            api_key = self.config.get("featherless_api_key")
+
+            if not api_key:
+                api_key = os.environ.get("FEATHERLESS_API_KEY")
+
+            if not api_key:
+                key_path = Path(__file__).resolve().parent.parent / "Featherless_API.txt"
+                if key_path.is_file():
+                    api_key = key_path.read_text(encoding="utf-8").strip()
+
+            if not api_key:
+                raise ValueError(
+                    "Featherless API key not found. Please set it using one of these methods:\n"
+                    f"1. Save your key to: {Path(__file__).resolve().parent.parent / 'Featherless_API.txt'}\n"
+                    "2. Set environment variable: export FEATHERLESS_API_KEY='your-key-here'\n"
+                    "3. Update the config with: config['featherless_api_key'] = 'your-key-here'"
+                )
         else:
             raise ValueError(f"Unsupported provider: {provider}. Must be one of {', '.join(SUPPORTED_PROVIDERS)}")
-        
+
         return api_key
 
     def _create_llm(
@@ -263,6 +281,14 @@ class TradingGraph:
                 model=model,
                 temperature=temperature,
                 google_api_key=api_key,
+                max_retries=4,
+            )
+        elif provider == "featherless":
+            return ChatOpenAI(
+                model=model,
+                temperature=temperature,
+                api_key=api_key,
+                openai_api_base="https://api.featherless.ai/v1",
                 max_retries=4,
             )
         else:
@@ -341,11 +367,11 @@ class TradingGraph:
             # Also update the environment variable for consistency
             os.environ["MINIMAX_API_KEY"] = api_key
         elif provider == "minimax_cn":
-            # Update the config with the new API key
             self.config["minimax_cn_api_key"] = api_key
-
-            # Keep CN credentials separate from the global MiniMax key.
             os.environ["MINIMAX_CN_API_KEY"] = api_key
+        elif provider == "featherless":
+            self.config["featherless_api_key"] = api_key
+            os.environ["FEATHERLESS_API_KEY"] = api_key
         else:
             raise ValueError(f"Unsupported provider: {provider}. Must be one of {', '.join(SUPPORTED_PROVIDERS)}")
         

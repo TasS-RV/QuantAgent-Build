@@ -42,4 +42,5 @@ DEFAULT_CONFIG = {
     "minimax_api_key": "",  # MiniMax API key (optional, can also use MINIMAX_API_KEY env var)
     "minimax_cn_api_key": "",  # MiniMax CN API key (optional, can also use MINIMAX_CN_API_KEY or MINIMAX_API_KEY env var)
     "google_api_key": "",  # Google Gemini API key (optional; auto-loaded from ../Gemini_API.txt)
+    "featherless_api_key": os.environ.get("FEATHERLESS_API_KEY", ""),  # Featherless API key (auto-loaded from ../Featherless_API.txt)
 }

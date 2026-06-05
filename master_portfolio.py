@@ -82,11 +82,22 @@ DECISION_CONFIG: dict = {
 #  LLM CONFIG — edit or pass via CLI
 # ─────────────────────────────────────────────────────────────────────────────
 
-DEFAULT_LLM_PROVIDER = "google"   # openai | anthropic | qwen | minimax | google
+# Set True to run the fully deterministic quant pipeline with zero LLM calls.
+# Overridden at runtime by the --no-llm CLI flag.
+NO_LLM_MODE = True
+
+DEFAULT_LLM_PROVIDER = "featherless"   # openai | anthropic | qwen | minimax | google | featherless
 
 GEMINI_KEY_FILE = Path(__file__).resolve().parent.parent / "Gemini_API.txt"
 DEFAULT_GEMINI_AGENT_MODEL = "gemini-2.0-flash-lite"
 DEFAULT_GEMINI_GRAPH_MODEL = "gemini-2.0-flash-lite"
+
+FEATHERLESS_KEY_FILE = Path(__file__).resolve().parent.parent / "Featherless_API.txt"
+# Any model from https://api.featherless.ai/v1/models — use HuggingFace model ID format.
+# Examples: "meta-llama/Llama-3.3-70B-Instruct", "Qwen/Qwen2.5-72B-Instruct",
+#           "deepseek-ai/DeepSeek-V3-0324", "mistralai/Mistral-7B-Instruct-v0.3"
+DEFAULT_FEATHERLESS_AGENT_MODEL = "meta-llama/Llama-3.3-70B-Instruct"
+DEFAULT_FEATHERLESS_GRAPH_MODEL = "meta-llama/Llama-3.3-70B-Instruct"
 
 # Max data yfinance returns per timeframe
 _YFINANCE_MAX_DAYS: Dict[str, int] = {
@@ -109,15 +120,25 @@ def load_google_api_key() -> Optional[str]:
     return os.environ.get("GOOGLE_API_KEY")
 
 
+def load_featherless_api_key() -> Optional[str]:
+    """Load Featherless API key from Playground/Featherless_API.txt or FEATHERLESS_API_KEY env var."""
+    if FEATHERLESS_KEY_FILE.is_file():
+        key = FEATHERLESS_KEY_FILE.read_text(encoding="utf-8").strip()
+        if key:
+            return key
+    return os.environ.get("FEATHERLESS_API_KEY")
+
+
 def build_llm_config(provider: str, api_key: Optional[str] = None) -> dict:
     """Build TradingGraph LLM config for the chosen provider."""
     _key_map = {
-        "openai":     "api_key",
-        "anthropic":  "anthropic_api_key",
-        "qwen":       "qwen_api_key",
-        "minimax":    "minimax_api_key",
-        "minimax_cn": "minimax_cn_api_key",
-        "google":     "google_api_key",
+        "openai":       "api_key",
+        "anthropic":    "anthropic_api_key",
+        "qwen":         "qwen_api_key",
+        "minimax":      "minimax_api_key",
+        "minimax_cn":   "minimax_cn_api_key",
+        "google":       "google_api_key",
+        "featherless":  "featherless_api_key",
     }
 
     llm_config: dict = {
@@ -132,6 +153,13 @@ def build_llm_config(provider: str, api_key: Optional[str] = None) -> dict:
         if resolved_key:
             llm_config["google_api_key"] = resolved_key
             os.environ["GOOGLE_API_KEY"] = resolved_key
+    elif provider == "featherless":
+        llm_config["agent_llm_model"] = DEFAULT_FEATHERLESS_AGENT_MODEL
+        llm_config["graph_llm_model"] = DEFAULT_FEATHERLESS_GRAPH_MODEL
+        resolved_key = api_key or load_featherless_api_key()
+        if resolved_key:
+            llm_config["featherless_api_key"] = resolved_key
+            os.environ["FEATHERLESS_API_KEY"] = resolved_key
     elif api_key:
         llm_config[_key_map.get(provider, "api_key")] = api_key
 
@@ -272,10 +300,16 @@ def parse_args() -> argparse.Namespace:
     p.add_argument(
         "--provider",
         default=DEFAULT_LLM_PROVIDER,
-        choices=["openai", "anthropic", "qwen", "minimax", "minimax_cn", "google"],
+        choices=["openai", "anthropic", "qwen", "minimax", "minimax_cn", "google", "featherless"],
         help="LLM provider for perception agents (pattern / trend vision analysis)",
     )
     p.add_argument("--api-key",   default=None, help="API key for the chosen provider")
+    p.add_argument(
+        "--no-llm",
+        action="store_true",
+        default=NO_LLM_MODE,
+        help="Run fully deterministic quant pipeline (zero LLM calls)",
+    )
     p.add_argument("--no-short",  action="store_true", help="Disable SHORT signals (long-only)")
     p.add_argument("--rr-target", type=float,   default=None, help="Risk:reward target ratio")
     p.add_argument("--atr-mult",  type=float,   default=None, help="ATR multiplier for stop-loss")
@@ -307,28 +341,38 @@ def main() -> List[dict]:
     if args.atr_mult is not None:
         dec_cfg["atr_multiplier_sl"] = args.atr_mult
 
-    # --- Import here to avoid slow startup until we need it ---
-    from trading_graph import TradingGraph
+    from graph_setup import SetGraph
+    from graph_util import TechnicalTools
 
     print("=" * 72)
     print(f"  QuantAgent Portfolio  —  {datetime.now().strftime('%Y-%m-%d %H:%M')}")
-    print(f"  Provider: {args.provider}  |  Tickers: {len(PORTFOLIO)}")
+    if args.no_llm:
+        print(f"  Mode: NO-LLM (fully deterministic)  |  Tickers: {len(PORTFOLIO)}")
+    else:
+        print(f"  Provider: {args.provider}  |  Tickers: {len(PORTFOLIO)}")
     print("=" * 72)
 
-    # Initialise TradingGraph once (shared LLM instances across tickers).
-    # ensure_initialized() raises a clear ValueError if the provider has no API
-    # key (rather than an AttributeError on a deferred/None graph_setup).
-    trading_graph = TradingGraph(config=llm_config)
-    trading_graph.ensure_initialized()
-
-    # Compile graph with the pure-math quant decision node
-    compiled_graph = trading_graph.graph_setup.set_graph_quant(
-        weights            = dec_cfg.get("weights"),
-        thresholds         = dec_cfg.get("thresholds"),
-        atr_multiplier_sl  = dec_cfg["atr_multiplier_sl"],
-        risk_reward_target = dec_cfg["risk_reward_target"],
-        allow_short        = dec_cfg["allow_short"],
-    )
+    if args.no_llm:
+        # Fully deterministic — no API key required, no LLM calls at all.
+        graph_setup = SetGraph(None, None, TechnicalTools())
+        compiled_graph = graph_setup.set_graph_full_quant(
+            weights            = dec_cfg.get("weights"),
+            thresholds         = dec_cfg.get("thresholds"),
+            atr_multiplier_sl  = dec_cfg["atr_multiplier_sl"],
+            risk_reward_target = dec_cfg["risk_reward_target"],
+            allow_short        = dec_cfg["allow_short"],
+        )
+    else:
+        from trading_graph import TradingGraph
+        trading_graph = TradingGraph(config=llm_config)
+        trading_graph.ensure_initialized()
+        compiled_graph = trading_graph.graph_setup.set_graph_quant(
+            weights            = dec_cfg.get("weights"),
+            thresholds         = dec_cfg.get("thresholds"),
+            atr_multiplier_sl  = dec_cfg["atr_multiplier_sl"],
+            risk_reward_target = dec_cfg["risk_reward_target"],
+            allow_short        = dec_cfg["allow_short"],
+        )
 
     all_results: List[dict] = []
     failed: List[str] = []

@@ -7,4 +7,26 @@ ICLR2026_QuantAgent (18).pdf
 pdf_content.txt
 read.html
 read_files/
+<<<<<<< HEAD
 app/
+=======
+app/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Backtest outputs
+backtest_results/
+backtest_smoke/
+backtest_results.log
+*.cache
+
+# Local venv / IDE
+.venv/
+.claude/
+
+# local test virtualenv
+.testvenv/
+>>>>>>> d25a181f7efa17f29ba9008ec6dd624f72b86e8c

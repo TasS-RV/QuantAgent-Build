@@ -9,6 +9,13 @@ from unittest.mock import MagicMock, patch, PropertyMock
 # Add project root to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 os.environ.setdefault("MPLCONFIGDIR", "/private/tmp/matplotlib")
+<<<<<<< HEAD
+=======
+# The merged default config uses the Google provider; TradingGraph() requires a
+# key to construct. langchain_google_genai is mocked below, so a dummy key here
+# lets WebInterface()/TradingGraph() build without a real Gemini key.
+os.environ.setdefault("GOOGLE_API_KEY", "test-google-key")
+>>>>>>> d25a181f7efa17f29ba9008ec6dd624f72b86e8c
 
 # Mock heavy native/incompatible dependencies before importing project modules
 # TA-Lib requires a C library; langchain has pydantic v1/v2 conflicts
@@ -21,6 +28,10 @@ MOCK_MODULES = [
     "langchain_core.tools",
     "langchain_openai",
     "langchain_qwq",
+<<<<<<< HEAD
+=======
+    "langchain_google_genai",
+>>>>>>> d25a181f7efa17f29ba9008ec6dd624f72b86e8c
     "langgraph",
     "langgraph.graph",
     "langgraph.prebuilt",
@@ -28,6 +39,11 @@ MOCK_MODULES = [
     "matplotlib.pyplot",
     "mplfinance",
     "yfinance",
+<<<<<<< HEAD
+=======
+    "openai",
+    "anthropic",
+>>>>>>> d25a181f7efa17f29ba9008ec6dd624f72b86e8c
 ]
 
 for mod_name in MOCK_MODULES:
@@ -621,5 +637,57 @@ class TestProviderSwitchBackToOpenAI(unittest.TestCase):
         self.assertEqual(analyzer.config["graph_llm_model"], "gpt-4o")
 
 
+<<<<<<< HEAD
+=======
+class TestKeylessStartup(unittest.TestCase):
+    """TradingGraph should construct without crashing when no API key is set yet
+    (so the web UI can boot and let the user enter a key), then build on refresh."""
+
+    def _no_key_config(self):
+        cfg = DEFAULT_CONFIG.copy()
+        cfg["agent_llm_provider"] = "google"
+        cfg["graph_llm_provider"] = "google"
+        cfg["google_api_key"] = ""
+        cfg["api_key"] = ""
+        return cfg
+
+    def test_construct_without_key_defers(self):
+        from trading_graph import TradingGraph
+        saved = os.environ.pop("GOOGLE_API_KEY", None)
+        try:
+            tg = TradingGraph(config=self._no_key_config())   # must not raise
+            self.assertIsNone(tg.graph)
+            self.assertIsNone(tg.agent_llm)
+        finally:
+            if saved is not None:
+                os.environ["GOOGLE_API_KEY"] = saved
+
+    def test_refresh_builds_once_key_present(self):
+        from trading_graph import TradingGraph
+        saved = os.environ.pop("GOOGLE_API_KEY", None)
+        try:
+            tg = TradingGraph(config=self._no_key_config())
+            self.assertIsNone(tg.graph)
+            tg.config["google_api_key"] = "test-key"
+            tg.refresh_llms()                                  # now has a key
+            self.assertIsNotNone(tg.graph)
+            self.assertIsNotNone(tg.agent_llm)
+        finally:
+            if saved is not None:
+                os.environ["GOOGLE_API_KEY"] = saved
+
+    def test_refresh_without_key_raises(self):
+        from trading_graph import TradingGraph
+        saved = os.environ.pop("GOOGLE_API_KEY", None)
+        try:
+            tg = TradingGraph(config=self._no_key_config())
+            with self.assertRaises(ValueError):
+                tg.refresh_llms()                              # still no key -> raises
+        finally:
+            if saved is not None:
+                os.environ["GOOGLE_API_KEY"] = saved
+
+
+>>>>>>> d25a181f7efa17f29ba9008ec6dd624f72b86e8c
 if __name__ == "__main__":
     unittest.main()

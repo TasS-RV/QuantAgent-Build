@@ -54,10 +54,18 @@
 
 A sophisticated multi-agent trading analysis system that combines technical indicators, pattern recognition, and trend analysis using LangChain and LangGraph. The system provides both a web interface and programmatic access for comprehensive market analysis.
 
+<<<<<<< HEAD
 
 <div align="center">
 
 🚀 [Features](#-features) | ⚡ [Installation](#-installation) | 🎬 [Usage](#-usage) | 🔧 [Implementation Details](#-implementation-details) | 🤝 [Contributing](#-contributing) | 📄 [License](#-license)
+=======
+> **About this fork (`TasS-RV/QuantAgent-Build`)** — This is a build/extension of the upstream [QuantAgent](https://github.com/Y-Research-SBU/QuantAgent) research project. On top of the original LangGraph multi-agent system, this fork adds an **AlgoEdge** pipeline: a Google Gemini–backed indicator node, a visualisation toolkit that overlays EMA + Fibonacci levels and AI-suggested buy/sell price points, and a **Telegram bot** that pushes the analysis (with the annotated chart image) straight to your phone. See [AlgoEdge Extensions](#-algoedge-extensions-this-fork) for setup.
+
+<div align="center">
+
+🚀 [Features](#-features) | 📲 [AlgoEdge Extensions](#-algoedge-extensions-this-fork) | 🧪 [Backtesting & Quant](#-backtesting--quant-pipelines) | ⚡ [Installation](#-installation) | 🎬 [Usage](#-usage) | 🔧 [Implementation Details](#-implementation-details) | 🤝 [Contributing](#-contributing) | 📄 [License](#-license)
+>>>>>>> d25a181f7efa17f29ba9008ec6dd624f72b86e8c
 
 </div>
 
@@ -97,6 +105,21 @@ Modern Flask-based web application with:
   - Dynamic chart generation
   - API key management
 
+<<<<<<< HEAD
+=======
+## 📲 AlgoEdge Extensions (this fork)
+
+This fork adds a lightweight, end-to-end alerting pipeline on top of the core agents. It is independent of the Flask web interface and is driven by **Google Gemini** rather than the LangChain providers.
+
+- **Gemini Indicator Node** (`Indicator_node.py`) — A standalone LangGraph-style node (`run_indicator_agent`) that sends a structured technical payload (EMA 9/14 momentum + Fibonacci support/resistance) to `gemini-2.5-flash` and gets back a strict-JSON trade report: trend summary, `Buy`/`Sell`/`Hold` action, suggested entry, take-profit, stop-loss, and rationale.
+- **Visualisation Toolkit** (`plot_algoedge_chart`) — Renders the close price with EMA 9/14 and Fibonacci levels overlaid, and draws the AI's suggested **entry, take-profit, stop-loss, and your held price** as bold horizontal lines. Can return an in-memory image buffer (for Telegram), save a PNG locally, or pop up on screen.
+- **Telegram Bot** (`Tele_bot.py`) — `send_telegram_alert` formats the report into a clean alert (🟢 BUY / 🔴 SELL / ⚪ HOLD) and pushes it to your chat, attaching the annotated chart as a photo.
+
+A sample of the generated chart is committed at the repo root: `NVDA_AlgoEdge_Analysis.png`.
+
+> **Setup for these features is described in the [Installation](#-installation) section below** (Gemini API key file + `telegram_keys.json`), and how to run it is under [Usage → AlgoEdge pipeline](#run-the-algoedge-pipeline).
+
+>>>>>>> d25a181f7efa17f29ba9008ec6dd624f72b86e8c
 ## 📦 Installation
 
 ### 1. Create and Activate Conda Environment
@@ -142,7 +165,42 @@ export MINIMAX_API_KEY="your_minimax_api_key_here"
 
 ```
 
+<<<<<<< HEAD
 
+=======
+### 4. Set Up AlgoEdge Credentials (for the Gemini + Telegram pipeline)
+
+The AlgoEdge pipeline reads its secrets from **one folder above the repository** so they never get committed to git. From inside the repo, that means the files live in the *parent* directory.
+
+**a) Google Gemini API key** — used by `Indicator_node.py` via `API_client.py`. Create a [Google AI Studio key](https://aistudio.google.com/apikey) and save it as plain text:
+
+```bash
+# Run from the repository root — writes the file one level up
+echo "your_gemini_api_key_here" > ../Gemini_API.txt
+```
+
+**b) Telegram bot credentials** — used by `Tele_bot.py` to push alerts. Create a bot with [@BotFather](https://t.me/BotFather) to get a token, and get your chat ID (e.g. from [@userinfobot](https://t.me/userinfobot)). Save them as JSON:
+
+```bash
+cat > ../telegram_keys.json <<'EOF'
+{
+  "bot_token": "123456:ABC-your-bot-token",
+  "chat_id": "your_chat_id"
+}
+EOF
+```
+
+Your parent directory should then contain:
+
+```
+..
+├── Gemini_API.txt
+├── telegram_keys.json
+└── QuantAgent-Build/   ← this repo
+```
+
+> **Security note:** Keeping these files outside the repo keeps secrets out of version control. Do not move them inside the repo or hard-code keys into source. If you ever do place credentials inside the working tree, add them to `.gitignore` first.
+>>>>>>> d25a181f7efa17f29ba9008ec6dd624f72b86e8c
 
 
 
@@ -164,6 +222,144 @@ The web application will be available at `http://127.0.0.1:5000`
 4. **Real-time Analysis**: Get comprehensive technical analysis with visualizations
 5. **API Key Management**: Update your OpenAI API key through the interface
 
+<<<<<<< HEAD
+=======
+### Run the AlgoEdge pipeline
+
+Once the [AlgoEdge credentials](#4-set-up-algoedge-credentials-for-the-gemini--telegram-pipeline) are in place, run the indicator node directly:
+
+```bash
+python Indicator_node.py
+```
+
+This fetches live data via yfinance, runs the Gemini indicator agent, generates the annotated chart, and pushes the alert + chart to your Telegram chat. The behaviour is controlled by the toggles in the `__main__` block at the bottom of `Indicator_node.py`:
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `test_symbol` | `"NVDA"` | Ticker to analyse |
+| `test_duration` | `"6mo"` | History window passed to yfinance |
+| `timeframe` | `"1d"` | Candle interval |
+| `user_entry` | `220.50` | Your held entry price (drawn on the chart) |
+| `visualise_indicators` | `True` | Overlay EMA 9/14 + Fibonacci levels |
+| `visualise_price_points` | `True` | Draw AI entry / take-profit / stop-loss lines |
+| `return_buffer_state` | `True` | Produce an in-memory image (required to send to Telegram) |
+| `send_to_tele` | `True` | Also save a local PNG and push to Telegram |
+
+To preview the chart on screen instead of sending it, set `return_buffer_state = False` and `send_to_tele = False` so `plot_algoedge_chart` calls `plt.show()`.
+
+## 🧪 Backtesting & Quant Pipelines
+
+This build also integrates two complementary quantitative pipelines that were developed on separate branches and merged into the base. They live alongside the LangGraph web app and the AlgoEdge pipeline and share `default_config.py`.
+
+### A. Quant decision pipeline (LangGraph + Gemini)
+
+A mathematics-first extension of the original agents: the indicator and trend agents now compute deterministic numerical signals (via `talib`) that feed an agentic **quant decision node** and a portfolio-level runner.
+
+- `master_portfolio.py` — portfolio-level analysis across a universe of tickers, with a quant decision node that curates the mathematical agent outputs into trade decisions.
+- `decision_agent_quant.py` / `quant_nodes.py` — the quant decision agent and its LangGraph nodes.
+- Default models are Gemini (`gemini-2.5-flash` / `gemini-2.5-flash-lite`); the Gemini key is auto-loaded from `../Gemini_API.txt` (see [step 4](#4-set-up-algoedge-credentials-for-the-gemini--telegram-pipeline)).
+
+```bash
+# Portfolio analysis (provider one of: openai, anthropic, qwen, minimax, minimax_cn, google)
+python master_portfolio.py --provider google --breakdown
+python master_portfolio.py --provider google --no-short --rr-target 2.0 --output results.json
+```
+
+See [`docs/QUANT_DECISION_AGENT.md`](docs/QUANT_DECISION_AGENT.md) and [`docs/LLM_CONFIG_GUIDE.md`](docs/LLM_CONFIG_GUIDE.md) for the design and for switching the LLM/provider and API key.
+
+### B. Backtest harness (OpenAI Agents SDK + pandas-ta)
+
+A self-contained pipeline (independent of LangChain) that uses the **OpenAI Agents SDK** and `pandas-ta` for fast historical backtesting.
+
+- `quant_agents.py` — the agent pipeline (`run_pipeline` / `run_pipeline_async`).
+- `backtest.py` — runs the pipeline across a symbol universe over historical windows.
+- `run_single.py` — one-shot analysis of a single symbol.
+- `indicators.py`, `charts.py`, `visualize.py` — supporting indicators and plotting.
+
+```bash
+# Single symbol
+python run_single.py --symbol NVDA --period 6mo --interval 1d
+
+# Universe backtest (defaults to top-10 US tickers, 5y, weekly cadence)
+python backtest.py --symbols NVDA AAPL MSFT --period 5y --cadence W-FRI --concurrency 4 --out backtest_results
+```
+
+**Deterministic engine + risk overlays (`backtest_engine.py`).** Signal generation
+(the expensive, non-deterministic LLM step) is now separated from trade simulation
+(pure, reproducible math). The engine implements the [Backtest Improvement
+Roadmap](docs/BACKTEST_IMPROVEMENT_ROADMAP.md): **HOLD** as cash, a **200-day SMA
+trend filter** (never short an uptrend / long a downtrend), a **confidence gate**,
+**trading costs** (commission + slippage per side, short borrow), and **ATR
+stop/target exits** (target = `risk_reward_ratio` × stop distance). It also runs
+**trivial baselines** — buy & hold, always-long, 200dma trend-follower, seeded
+random — and prints a pass/fail verdict vs the 200dma baseline.
+
+```bash
+# Tune overlays and add an out-of-sample window
+python backtest.py --symbols NVDA AAPL --cadence W-FRI \
+    --confidence-gate 0.75 --atr-mult 1.5 --commission 0.0002 --slippage 0.0005 \
+    --oos-start 2025-01-01            # also reports OOS metrics
+python backtest.py --no-trend-filter --no-stops --no-short   # ablations
+```
+
+Outputs: `summary.csv`, `baselines.csv`, per-symbol `*_trades.csv`, and
+`all_signals.json` (consumed by the validator below).
+
+> ⚠️ **Model config for this stack.** `quant_agents.py` reads `agent_llm_model` / `vision_llm_model` / `decision_llm_model` as **OpenAI** model names, but the repo-wide default of `agent_llm_model` is a Gemini model (the fork's primary pipeline). To run the backtest stack, set an OpenAI key and override the model, e.g.:
+> ```bash
+> export OPENAI_API_KEY="sk-..."
+> export LLM_PROVIDER=openai
+> export AGENT_LLM_MODEL=gpt-4o-mini   # also VISION_LLM_MODEL / DECISION_LLM_MODEL if desired
+> ```
+> Or pass a config dict to `run_pipeline(...)`. Optionally put these in a `.env` file (auto-loaded — see `.env.example`).
+
+See [`IMPROVEMENTS.md`](IMPROVEMENTS.md), [`docs/PIPELINE_COMPARISON.md`](docs/PIPELINE_COMPARISON.md), and the backtest docs under [`docs/`](docs/) for details.
+
+### C. VectorBT validation (`validate_vectorbt.py`)
+
+Independently validates the backtest/decision signals with **VectorBT**. It reads
+`all_signals.json` (or a `master_portfolio --output` file), converts the dated
+directional signals into a long/short position series, and evaluates it with
+`vbt.Portfolio.from_signals` (fees + slippage). If VectorBT isn't installed it
+falls back to the deterministic engine, so it always runs.
+
+```bash
+python validate_vectorbt.py --signals backtest_results/all_signals.json \
+    --history-dir backtest_results --fees 0.0007
+```
+
+### D. Scheduled portfolio analysis → Telegram (`portfolio_scheduler.py`)
+
+Pulls your holdings (Trading 212 portfolio, a watchlist, or a built-in mock),
+fetches recent OHLC, runs the **free, deterministic** quant decision per holding
+(`quant_signal.py` — no LLM, so it's repeatable and costs nothing), and pushes a
+consolidated BUY/SELL/HOLD message to Telegram every interval.
+
+```bash
+python portfolio_scheduler.py --source mock --once --no-telegram      # keyless dry run
+python portfolio_scheduler.py --source watchlist --symbols AAPL NVDA --interval 3600
+python portfolio_scheduler.py --source t212 --once                    # live Trading 212 portfolio
+python portfolio_scheduler.py --source t212 --sentiment-weight 0.2    # blend in news sentiment (§E)
+```
+
+> **Trading 212 key.** Save your API key (Settings → API in the T212 app) as
+> `../trading212_key.txt` (one folder above the repo, like the other secrets), or
+> set `TRADING212_API_KEY`. Add `TRADING212_DEMO=1` for the practice account.
+>
+> **ETF caveat (issue #3).** Trading 212 returns an ETF as a single position, so
+> the pipeline analyses the ETF's *own* price series — not its underlying
+> constituents. ETF lines in the Telegram message are tagged accordingly.
+
+### E. FinBERT news sentiment (`sentiment_agent.py`) — optional
+
+An optional overlay using **ProsusAI/finbert** that scores recent headlines into a
+sentiment signal ∈ [-1, 1] and blends it into the decision's combined signal,
+re-deriving BUY/HOLD/SELL/SHORT (adjusting the decision-agent output, issue #5).
+Enable it on the scheduler with `--sentiment-weight 0.2`. Requires `transformers`
++ `torch` (optional, commented in `requirements.txt`); if absent, the overlay is a
+no-op and decisions are unchanged.
+
+>>>>>>> d25a181f7efa17f29ba9008ec6dd624f72b86e8c
 ## 📺 Demo
 
 ![Quick preview](assets/demo.gif)
@@ -281,6 +477,11 @@ This repository was built with the help of the following libraries and framework
 - [**LangGraph**](https://github.com/langchain-ai/langgraph)
 - [**OpenAI**](https://github.com/openai/openai-python)
 - [**Anthropic (Claude)**](https://github.com/anthropics/anthropic-sdk-python)
+<<<<<<< HEAD
+=======
+- [**Google Gemini**](https://github.com/googleapis/python-genai) — powers the AlgoEdge indicator node
+- [**Telegram Bot API**](https://core.telegram.org/bots/api) — alert delivery
+>>>>>>> d25a181f7efa17f29ba9008ec6dd624f72b86e8c
 - [**Qwen**](https://github.com/QwenLM/Qwen)
 - [**MiniMax**](https://platform.minimaxi.com/) — 204K context, OpenAI-compatible API
 - [**yfinance**](https://github.com/ranaroussi/yfinance)

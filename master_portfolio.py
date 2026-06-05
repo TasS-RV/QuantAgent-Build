@@ -49,9 +49,9 @@ PORTFOLIO: Dict[str, dict] = {
     #     "timeframe":     str,              ← yfinance interval string
     # },
     "AAPL":    {"entry_price": 189.50, "lookback_days": 120, "timeframe": "1d"},
-    "TSLA":    {"entry_price":   None, "lookback_days":  90, "timeframe": "1d"},
-    "NVDA":    {"entry_price": 870.00, "lookback_days":  60, "timeframe": "1d"},
-    "BTC-USD": {"entry_price":   None, "lookback_days":  90, "timeframe": "1d"},
+#    "TSLA":    {"entry_price":   None, "lookback_days":  90, "timeframe": "1d"},
+#    "NVDA":    {"entry_price": 870.00, "lookback_days":  60, "timeframe": "1d"},
+#    "BTC-USD": {"entry_price":   None, "lookback_days":  90, "timeframe": "1d"},
 }
 
 
@@ -84,7 +84,7 @@ DECISION_CONFIG: dict = {
 
 # Set True to run the fully deterministic quant pipeline with zero LLM calls.
 # Overridden at runtime by the --no-llm CLI flag.
-NO_LLM_MODE = True
+NO_LLM_MODE = False
 
 # Set True to save per-ticker charts after each run.
 # Output: charts/<TICKER>/pattern.png, trend.png, indicators.html
@@ -94,8 +94,8 @@ CHARTS_DIR  = "charts"
 DEFAULT_LLM_PROVIDER = "featherless"   # openai | anthropic | qwen | minimax | google | featherless
 
 GEMINI_KEY_FILE = Path(__file__).resolve().parent.parent / "Gemini_API.txt"
-DEFAULT_GEMINI_AGENT_MODEL = "gemini-2.0-flash-lite"
-DEFAULT_GEMINI_GRAPH_MODEL = "gemini-2.0-flash-lite"
+DEFAULT_GEMINI_AGENT_MODEL = "gemini-3.1-flash-lite"
+DEFAULT_GEMINI_GRAPH_MODEL = "gemini-3.1-flash-lite"
 
 FEATHERLESS_KEY_FILE = Path(__file__).resolve().parent.parent / "Featherless_API.txt"
 # Any model from https://api.featherless.ai/v1/models — use HuggingFace model ID format.
@@ -346,6 +346,12 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         default=NO_LLM_MODE,
         help="Run fully deterministic quant pipeline (zero LLM calls)",
+    )
+    p.add_argument(
+        "--llm",
+        dest="no_llm",
+        action="store_false",
+        help="Use LLM agents (overrides NO_LLM_MODE=True in config)",
     )
     p.add_argument("--no-short",  action="store_true", help="Disable SHORT signals (long-only)")
     p.add_argument("--rr-target", type=float,   default=None, help="Risk:reward target ratio")

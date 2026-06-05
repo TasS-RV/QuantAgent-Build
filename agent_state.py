@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-from typing import Annotated, List, TypedDict
-=======
 from typing import Annotated, List, Optional, TypedDict
->>>>>>> d25a181f7efa17f29ba9008ec6dd624f72b86e8c
 
 from langchain_core.messages import BaseMessage
 
@@ -14,16 +10,12 @@ class IndicatorAgentState(TypedDict):
         dict, "OHLCV dictionary used for computing technical indicators"
     ]
     time_frame: Annotated[str, "time period for k line data provided"]
-<<<<<<< HEAD
-    stock_name: Annotated[dict, "stock name for prompt"]
-=======
     stock_name: Annotated[str, "stock name for prompt"]
     entry_price: Annotated[
         Optional[float],
         "User's current position cost (None = flat). Used by the quant decision node "
         "to compute unrealised P&L and trigger protective SELL overrides.",
     ]
->>>>>>> d25a181f7efa17f29ba9008ec6dd624f72b86e8c
 
     # Indicator Agent Tools output values (explicitly added per indicator)
     rsi: Annotated[List[float], "Relative Strength Index values"]

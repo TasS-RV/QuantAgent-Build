@@ -77,8 +77,6 @@ class SetGraph:
         # Decision Maker Process
         graph.add_edge("Decision Maker", END)
 
-<<<<<<< HEAD
-=======
         return graph.compile()
 
     def set_graph_quant(
@@ -177,5 +175,4 @@ class SetGraph:
         graph.add_edge("Pattern Agent",   "Trend Agent")
         graph.add_edge("Trend Agent",     "Decision Maker")
         graph.add_edge("Decision Maker",  END)
->>>>>>> d25a181f7efa17f29ba9008ec6dd624f72b86e8c
         return graph.compile()

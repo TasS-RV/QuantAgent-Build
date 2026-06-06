@@ -3,21 +3,18 @@
 QuantAgent Master Portfolio Script
 ===================================
 Runs the full LangGraph pipeline (Indicator → Pattern → Trend → Quant Decision)
-across a configurable portfolio of tickers, prints a decision table, and
-optionally sends a trade-card summary to Telegram.
+across a configurable portfolio of tickers and prints a decision table.
 
 Quick start
 ───────────
-    python master_portfolio.py                  # demo portfolio, no LLM, no Telegram
-    python master_portfolio.py --t212           # pull live T212 positions
-    python master_portfolio.py --t212 --demo    # pull T212 practice positions
-    python master_portfolio.py --telegram       # enable Telegram send this run
-    python master_portfolio.py --provider google --llm   # Gemini LLM mode
+    python master_portfolio.py                        # demo portfolio, no LLM
+    python master_portfolio.py --llm --provider google  # Gemini LLM mode
+    python master_portfolio.py --breakdown            # print per-ticker signal breakdown
 
-Portfolio source (edit config below or pass CLI flags)
-───────────────────────────────────────────────────────
-    USE_T212=False   →  demo_portfolio.json  (static file you edit)
-    USE_T212=True    →  live T212 positions (requires T212 API key in .env.keys)
+Portfolio source
+────────────────
+    Edit demo_portfolio.json to configure tickers, entry prices, and allocations.
+    PORTFOLIO_FILE can be overridden below or via --portfolio flag.
 
 Note on yfinance limits
 ───────────────────────
@@ -44,21 +41,10 @@ import yfinance as yf
 #  PORTFOLIO SOURCE — edit this
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Set True  → pull open positions from Trading 212 (requires .env.keys keys).
-# Set False → load from PORTFOLIO_FILE  (demo_portfolio.json by default).
-USE_T212: bool = False
-
-# When USE_T212=True: True = T212 practice account, False = live account.
-T212_DEMO: bool = False
-
-# Static portfolio file used when USE_T212=False.
+# Portfolio JSON file.
 # Format: { "TICKER": { "entry_price", "quantity", "lookback_days",
 #                        "timeframe", "allocation_pct" }, ... }
 PORTFOLIO_FILE: Path = Path(__file__).resolve().parent / "demo_portfolio.json"
-
-# Default analysis settings for T212-sourced tickers
-# (T212 doesn't tell us lookback / timeframe; these fill in the gap).
-T212_DEFAULTS: dict = {"lookback_days": 90, "timeframe": "1d"}
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -88,21 +74,21 @@ DECISION_CONFIG: dict = {
 #  LLM CONFIG — edit or pass via CLI
 # ─────────────────────────────────────────────────────────────────────────────
 
-# ─────────────────────────────────────────────────────────────────────────────
-#  TELEGRAM — edit this
-# ─────────────────────────────────────────────────────────────────────────────
-
-# Send a trade-card summary to Telegram after each run.
-# Override at runtime with --telegram / --no-telegram CLI flags.
-TELEGRAM_ENABLED: bool = True
-
-# ─────────────────────────────────────────────────────────────────────────────
-#  LLM CONFIG — edit or pass via CLI
-# ─────────────────────────────────────────────────────────────────────────────
-
 # Set True to run the fully deterministic quant pipeline with zero LLM calls.
 # Overridden at runtime by the --no-llm CLI flag.
 NO_LLM_MODE = True
+
+# When NO_LLM_MODE is True, this controls whether TA-Lib CDL candlestick
+# patterns (Engulfing, Hammer, MorningStar, EveningStar, etc.) contribute
+# to the combined signal.
+#
+#   True  → use TA-Lib CDL pattern node (default — good for day-by-day
+#            reversal detection on short timeframes like 1d / 1h)
+#   False → indicator + trend signals only; pattern weight redistributed
+#           proportionally so weights still sum to 1.0
+#
+# Has no effect when NO_LLM_MODE is False (LLM pattern agent is always used).
+USE_CDL_PATTERNS = True
 
 # Set True to save per-ticker charts after each run.
 # Output: charts/<TICKER>/pattern.png, trend.png, indicators.html
@@ -205,44 +191,15 @@ def build_llm_config(provider: str, api_key: Optional[str] = None) -> dict:
 #  PORTFOLIO LOADING
 # ─────────────────────────────────────────────────────────────────────────────
 
-def load_portfolio(
-    use_t212: bool = USE_T212,
-    t212_demo: bool = T212_DEMO,
-) -> dict:
+def load_portfolio(portfolio_file: Path = PORTFOLIO_FILE) -> dict:
     """
-    Return the portfolio as::
+    Load the portfolio from a JSON file.
 
-        {yf_symbol: {"entry_price", "quantity", "lookback_days",
-                     "timeframe", "allocation_pct", [is_etf]}}
-
-    use_t212=True  → fetch open positions from Trading 212 API.
-    use_t212=False → read from PORTFOLIO_FILE (demo_portfolio.json).
+    Returns:
+        {ticker: {"entry_price", "quantity", "lookback_days",
+                  "timeframe", "allocation_pct"}}
     """
-    if use_t212:
-        from data_exchange.trading212_client import Trading212Client
-
-        client    = Trading212Client(demo=t212_demo)
-        positions = client.get_portfolio()
-
-        total_val = sum(p.market_value for p in positions)
-
-        result = {}
-        for pos in positions:
-            alloc = (pos.market_value / total_val * 100) if total_val > 0 else 0.0
-            result[pos.yf_symbol] = {
-                "entry_price":    pos.average_price if pos.average_price > 0 else None,
-                "quantity":       pos.quantity,
-                "lookback_days":  T212_DEFAULTS["lookback_days"],
-                "timeframe":      T212_DEFAULTS["timeframe"],
-                "allocation_pct": round(alloc, 2),
-                "is_etf":         pos.is_etf,
-            }
-        account_label = "practice" if t212_demo else "live"
-        print(f"  [T212] {len(result)} position(s) loaded ({account_label} account).")
-        return result
-
-    # ── Static demo file ──────────────────────────────────────────────────
-    with open(PORTFOLIO_FILE, encoding="utf-8") as fh:
+    with open(portfolio_file, encoding="utf-8") as fh:
         data = json.load(fh)
     # Strip metadata keys (leading "_")
     return {k: v for k, v in data.items() if not k.startswith("_")}
@@ -410,63 +367,6 @@ def print_signal_breakdown(decisions: List[dict]) -> None:
         )
 
 
-def format_portfolio_telegram(trade_cards: List[dict], run_time: str) -> str:
-    """Format a list of trade cards as a Telegram Markdown message."""
-    _icon = {"BUY": "🟢", "SELL": "🔴", "SHORT": "🔴", "HOLD": "⚪"}
-
-    lines: List[str] = [
-        "📊 *QuantAgent Portfolio Report*",
-        f"_{run_time}_",
-        "",
-    ]
-
-    for card in trade_cards:
-        ticker = card.get("ticker", "?")
-        action = card.get("decision", "HOLD").upper()
-        icon   = _icon.get(action, "⚪")
-        sig    = card.get("combined_signal", 0)
-        cp     = card.get("current_price")
-        tp     = card.get("target_price")
-        sl     = card.get("stop_loss")
-        stl    = card.get("stop_limit")
-        tp_pct = card.get("tp_pct")
-        sl_pct = card.get("sl_pct")
-        alloc  = card.get("allocation_pct", 0.0)
-        qty    = card.get("quantity",        0)
-        pnl    = card.get("unrealized_pnl_pct")
-        is_etf = card.get("is_etf",          False)
-
-        etf_tag = "  _(ETF)_" if is_etf else ""
-        lines.append(f"{icon} *{ticker}*{etf_tag}  —  {action}   `{sig:+.3f}`")
-
-        if cp:
-            lines.append(
-                f"  Price `{cp:.4f}`  |  Alloc `{alloc:.1f}%`  |  Qty `{qty}`"
-            )
-        if pnl is not None:
-            sign = "+" if pnl >= 0 else ""
-            lines.append(f"  PnL `{sign}{pnl:.1f}%`")
-        if tp:
-            if tp_pct is not None:
-                sign_tp = "+" if tp_pct >= 0 else ""
-                pct_tag = f"  `({sign_tp}{tp_pct:.1f}%)`"
-            else:
-                pct_tag = ""
-            lines.append(f"  🎯 Target  `{tp:.4f}`{pct_tag}")
-        if sl:
-            if sl_pct is not None:
-                sign_sl = "+" if sl_pct >= 0 else ""
-                pct_tag = f"  `({sign_sl}{sl_pct:.1f}%)`"
-            else:
-                pct_tag = ""
-            lines.append(f"  🛡️ Stop-Loss  `{sl:.4f}`{pct_tag}")
-        if stl:
-            lines.append(f"  📌 Stop-Limit  `{stl:.4f}`")
-        lines.append("")
-
-    return "\n".join(lines)
-
-
 def _save_ticker_charts(ticker: str, kline_data: dict) -> None:
     """Generate and save pattern, trend, and indicator charts for a ticker."""
     import charts as _charts
@@ -537,41 +437,11 @@ def parse_args() -> argparse.Namespace:
         help="Print per-ticker signal breakdown after the summary table",
     )
 
-    # ── Portfolio source ───────────────────────────────────────────────────
     p.add_argument(
-        "--t212",
-        action="store_true",
-        dest="t212",
-        default=USE_T212,
-        help="Pull portfolio from Trading 212 API (requires .env.keys keys)",
-    )
-    p.add_argument(
-        "--no-t212",
-        action="store_false",
-        dest="t212",
-        help="Use demo_portfolio.json (default)",
-    )
-    p.add_argument(
-        "--t212-demo",
-        action="store_true",
-        dest="t212_demo",
-        default=T212_DEMO,
-        help="Use T212 practice account instead of live account",
-    )
-
-    # ── Telegram ───────────────────────────────────────────────────────────
-    p.add_argument(
-        "--telegram",
-        action="store_true",
-        dest="telegram",
-        default=TELEGRAM_ENABLED,
-        help="Send trade-card summary to Telegram after the run",
-    )
-    p.add_argument(
-        "--no-telegram",
-        action="store_false",
-        dest="telegram",
-        help="Disable Telegram for this run",
+        "--portfolio",
+        default=None,
+        metavar="FILE",
+        help="Path to a portfolio JSON file (default: demo_portfolio.json)",
     )
 
     return p.parse_args()
@@ -584,8 +454,9 @@ def parse_args() -> argparse.Namespace:
 def main() -> List[dict]:
     args = parse_args()
 
-    # --- Load portfolio (CLI flags override module-level config) ---
-    portfolio = load_portfolio(use_t212=args.t212, t212_demo=args.t212_demo)
+    # --- Load portfolio ---
+    pf_file = Path(args.portfolio) if args.portfolio else PORTFOLIO_FILE
+    portfolio = load_portfolio(pf_file)
 
     # --- Build LLM config ---
     llm_config = build_llm_config(args.provider, args.api_key)
@@ -599,13 +470,27 @@ def main() -> List[dict]:
     if args.atr_mult is not None:
         dec_cfg["atr_multiplier_sl"] = args.atr_mult
 
+    # --- Pattern toggle (NO_LLM_MODE only) ---
+    # When USE_CDL_PATTERNS is False, zero out the pattern weight and
+    # redistribute it proportionally across indicator + trend so they
+    # still sum to 1.0.
+    if args.no_llm and not USE_CDL_PATTERNS:
+        _w = dict(dec_cfg.get("weights") or DECISION_CONFIG["weights"])
+        _pat_w = _w.pop("pattern", 0.0)
+        _total  = sum(_w.values()) or 1.0
+        for _k in _w:
+            _w[_k] = round(_w[_k] + _pat_w * (_w[_k] / _total), 6)
+        _w["pattern"] = 0.0
+        dec_cfg = {**dec_cfg, "weights": _w}
+
     from graph_setup import SetGraph
     from graph_util import TechnicalTools
 
     print("=" * 72)
     print(f"  QuantAgent Portfolio  —  {datetime.now().strftime('%Y-%m-%d %H:%M')}")
     if args.no_llm:
-        print(f"  Mode: NO-LLM (fully deterministic)  |  Tickers: {len(portfolio)}")
+        _pat_label = "CDL patterns ON" if USE_CDL_PATTERNS else "CDL patterns OFF (indicator+trend only)"
+        print(f"  Mode: NO-LLM (fully deterministic)  |  {_pat_label}  |  Tickers: {len(portfolio)}")
     else:
         print(f"  Provider: {args.provider}  |  Tickers: {len(portfolio)}")
     print("=" * 72)
@@ -723,17 +608,6 @@ def main() -> List[dict]:
         with open(args.output, "w", encoding="utf-8") as fh:
             json.dump(all_results, fh, indent=2)
         print(f"\n  Results saved → {args.output}")
-
-    # ── Telegram ──────────────────────────────────────────────────────────
-    if args.telegram and all_results:
-        from data_exchange.Tele_bot import send_message
-        print("\n  Sending portfolio report to Telegram …")
-        msg = format_portfolio_telegram(
-            all_results, datetime.now().strftime("%Y-%m-%d %H:%M")
-        )
-        ok = send_message(msg)
-        if not ok:
-            print("  [WARN] Telegram send failed — check keys in .env.keys")
 
     print()
     return all_results

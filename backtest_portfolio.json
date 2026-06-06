@@ -1,0 +1,43 @@
+{
+  "_note": [
+    "Backtest portfolio — three decoupled sectors, daily cadence, 60-day rolling window.",
+    "Covers 2015-01-01 to present. Used for the 6-config parameter tuning experiments.",
+    "",
+    "Sector isolation rationale:",
+    "  GOOGL : Technology  — advertising spend / AI / tech growth cycle",
+    "  XOM   : Energy      — oil & gas commodity cycle, geopolitically driven",
+    "  JNJ   : Healthcare  — defensive, patent-driven, low macro correlation",
+    "",
+    "Usage (master_portfolio.py):",
+    "  python master_portfolio.py --portfolio backtest_portfolio.json",
+    "",
+    "Usage (backtest.py — symbols driven by SYMBOLS list, not this file):",
+    "  python backtest.py --run-config 1_baseline",
+    "  python backtest.py --run-config 2_trend_heavy",
+    "  ... etc."
+  ],
+
+  "GOOGL": {
+    "entry_price":    null,
+    "quantity":       0,
+    "lookback_days":  60,
+    "timeframe":      "1d",
+    "allocation_pct": 33.3
+  },
+
+  "XOM": {
+    "entry_price":    null,
+    "quantity":       0,
+    "lookback_days":  60,
+    "timeframe":      "1d",
+    "allocation_pct": 33.3
+  },
+
+  "JNJ": {
+    "entry_price":    null,
+    "quantity":       0,
+    "lookback_days":  60,
+    "timeframe":      "1d",
+    "allocation_pct": 33.4
+  }
+}

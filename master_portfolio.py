@@ -117,7 +117,19 @@ _YFINANCE_MAX_DAYS: Dict[str, int] = {
 # ─────────────────────────────────────────────────────────────────────────────
 
 def load_google_api_key() -> Optional[str]:
-    """Load Gemini API key from Playground/Gemini_API.txt or GOOGLE_API_KEY env var."""
+    """
+    Load Gemini API key. Priority order:
+      1. .env.keys  (key name: Gemini_API_key)
+      2. GOOGLE_API_KEY environment variable
+      3. Playground/Gemini_API.txt  (legacy flat file)
+    """
+    try:
+        from env_keys import get_key
+        val = get_key("Gemini_API_key", "GOOGLE_API_KEY")
+        if val:
+            return val
+    except ImportError:
+        pass
     if GEMINI_KEY_FILE.is_file():
         key = GEMINI_KEY_FILE.read_text(encoding="utf-8").strip()
         if key:

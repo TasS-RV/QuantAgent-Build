@@ -4,9 +4,9 @@ Trading 212 API client — fetch the current portfolio.
 Reads open equity positions from the Trading 212 public API. The API key is
 loaded (in priority order) from:
   1. the ``api_key`` argument
-  2. the ``TRADING212_API_KEY`` environment variable
-  3. ``../trading212_key.txt``  (one folder above the repo root — same
-     convention as the Gemini / Telegram secrets, keeping keys out of VCS)
+  2. ``.env.keys`` in the repo root  (key name: ``T212_key``)
+  3. ``TRADING212_API_KEY`` environment variable
+  4. ``../trading212_key.txt``  (legacy flat-file location)
 
 Use ``demo=True`` (or env ``TRADING212_DEMO=1``) to hit the practice account.
 
@@ -25,13 +25,20 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional
 
+import sys
+
 import requests
 
 LIVE_BASE = "https://live.trading212.com/api/v0"
 DEMO_BASE = "https://demo.trading212.com/api/v0"
 
-# Key file sits one level above the repo root — same convention as other secrets.
-_KEY_FILE = Path(__file__).resolve().parent.parent.parent / "trading212_key.txt"
+# Repo root (QuantAgent-Build/) — needed to import env_keys.py
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
+# Legacy flat-file fallback (kept for backwards compat)
+_KEY_FILE = _REPO_ROOT.parent / "trading212_key.txt"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -98,37 +105,70 @@ def _looks_like_etf(yf_symbol: str) -> bool:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _load_key(api_key: Optional[str]) -> Optional[str]:
+    """Load API key from argument → .env.keys → env var → legacy txt file."""
     if api_key:
         return api_key
-    env = os.environ.get("TRADING212_API_KEY")
-    if env:
-        return env
+    try:
+        from env_keys import get_key
+        val = get_key("T212_key", "TRADING212_API_KEY")
+        if val:
+            return val
+    except ImportError:
+        pass
+    val = os.environ.get("TRADING212_API_KEY")
+    if val:
+        return val
     if _KEY_FILE.exists():
         return _KEY_FILE.read_text(encoding="utf-8").strip()
     return None
+
+
+def _load_secret(api_secret: Optional[str]) -> Optional[str]:
+    """Load API secret from argument → .env.keys → env var."""
+    if api_secret:
+        return api_secret
+    try:
+        from env_keys import get_key
+        val = get_key("T212_secret", "TRADING212_API_SECRET")
+        if val:
+            return val
+    except ImportError:
+        pass
+    return os.environ.get("TRADING212_API_SECRET")
 
 
 class Trading212Client:
     def __init__(
         self,
         api_key: Optional[str] = None,
+        api_secret: Optional[str] = None,
         demo: Optional[bool] = None,
         timeout: int = 15,
     ):
-        self.api_key = _load_key(api_key)
+        self.api_key    = _load_key(api_key)
+        self.api_secret = _load_secret(api_secret)
         if demo is None:
             demo = os.environ.get("TRADING212_DEMO", "") in ("1", "true", "True")
-        self.base = DEMO_BASE if demo else LIVE_BASE
+        self.base    = DEMO_BASE if demo else LIVE_BASE
         self.timeout = timeout
 
     def _headers(self) -> dict:
         if not self.api_key:
             raise RuntimeError(
-                "No Trading 212 API key found. "
-                "Pass api_key=, set TRADING212_API_KEY env var, "
-                f"or create {_KEY_FILE}. "
-                "Use mock_portfolio() to test without a key."
+                "No Trading 212 API key found.\n"
+                "Add these two lines to .env.keys in the repo root:\n"
+                "  T212_key=<your-api-key>\n"
+                "  T212_secret=<your-api-secret>\n"
+                "Or use --mock to run on demo data without any key."
             )
+        if self.api_secret:
+            # T212 uses HTTP Basic Auth: base64(key:secret)
+            import base64
+            token = base64.b64encode(
+                f"{self.api_key}:{self.api_secret}".encode("utf-8")
+            ).decode("utf-8")
+            return {"Authorization": f"Basic {token}"}
+        # Fallback: plain key (some older T212 beta endpoints accepted this)
         return {"Authorization": self.api_key}
 
     def get_portfolio(self) -> List[Position]:

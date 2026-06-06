@@ -169,6 +169,14 @@ class TradingGraph:
             api_key = self.config.get("google_api_key")
 
             if not api_key:
+                # 1. .env.keys  2. env var  3. legacy txt file
+                try:
+                    from env_keys import get_key
+                    api_key = get_key("Gemini_API_key", "GOOGLE_API_KEY")
+                except ImportError:
+                    pass
+
+            if not api_key:
                 api_key = os.environ.get("GOOGLE_API_KEY")
 
             if not api_key:
@@ -178,11 +186,12 @@ class TradingGraph:
 
             if not api_key:
                 raise ValueError(
-                    "Google API key not found. Please set it using one of these methods:\n"
-                    "1. Save your key to: "
+                    "Google API key not found. Options:\n"
+                    "1. Add  Gemini_API_key=<key>  to .env.keys in the repo root\n"
+                    "2. Set  GOOGLE_API_KEY  environment variable\n"
+                    "3. Save key to: "
                     f"{Path(__file__).resolve().parent.parent / 'Gemini_API.txt'}\n"
-                    "2. Set environment variable: export GOOGLE_API_KEY='your-key-here'\n"
-                    "3. Update the config with: config['google_api_key'] = 'your-key-here'"
+                    "4. Pass  config['google_api_key'] = 'your-key'"
                 )
 
 

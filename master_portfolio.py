@@ -49,9 +49,9 @@ PORTFOLIO: Dict[str, dict] = {
     #     "timeframe":     str,              ← yfinance interval string
     # },
     "AAPL":    {"entry_price": 189.50, "lookback_days": 120, "timeframe": "1d"},
-#    "TSLA":    {"entry_price":   None, "lookback_days":  90, "timeframe": "1d"},
-#    "NVDA":    {"entry_price": 870.00, "lookback_days":  60, "timeframe": "1d"},
-#    "BTC-USD": {"entry_price":   None, "lookback_days":  90, "timeframe": "1d"},
+    "TSLA":    {"entry_price":   None, "lookback_days":  90, "timeframe": "1d"},
+    "NVDA":    {"entry_price": 870.00, "lookback_days":  60, "timeframe": "1d"},
+    "BTC-USD": {"entry_price":   None, "lookback_days":  90, "timeframe": "1d"},
 }
 
 
@@ -84,7 +84,7 @@ DECISION_CONFIG: dict = {
 
 # Set True to run the fully deterministic quant pipeline with zero LLM calls.
 # Overridden at runtime by the --no-llm CLI flag.
-NO_LLM_MODE = False
+NO_LLM_MODE = True
 
 # Set True to save per-ticker charts after each run.
 # Output: charts/<TICKER>/pattern.png, trend.png, indicators.html

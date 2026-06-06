@@ -22,8 +22,14 @@ import yfinance as yf
 from tqdm.asyncio import tqdm as atqdm
 from tqdm import tqdm
 
-import indicators  # noqa: F401  (warms up pandas-ta)
-from quant_agents import run_pipeline_async
+# LLM-mode dependencies (pandas_ta + OpenAI Agents SDK).
+# Imported lazily so --no-llm works without these installed.
+try:
+    import indicators as _indicators_mod  # noqa: F401  (warms up pandas-ta)
+    from quant_agents import run_pipeline_async
+    _LLM_DEPS_AVAILABLE = True
+except ImportError:
+    _LLM_DEPS_AVAILABLE = False
 from backtest_engine import Signal, SimConfig, simulate, run_with_baselines, trades_to_frame
 
 
@@ -111,6 +117,11 @@ async def collect_signals(
     concurrency: int = 4,
 ) -> list[Signal]:
     """Collect the agent's raw signals at each rebalance bar (the expensive LLM step)."""
+    if not _LLM_DEPS_AVAILABLE:
+        raise ImportError(
+            "LLM signal collection requires pandas_ta and the OpenAI Agents SDK. "
+            "Run with --no-llm to use the pure-quant pipeline instead."
+        )
     sem = asyncio.Semaphore(concurrency)
 
     async def one(idx: int):
@@ -138,6 +149,63 @@ async def collect_signals(
     ]
 
 
+# ---------- Signal collection (pure-quant, deterministic) ----------
+
+def collect_signals_quant(
+    symbol: str,
+    df: pd.DataFrame,
+    rebalance_idxs: list[int],
+    weights: dict | None = None,
+    thresholds: dict | None = None,
+) -> list[Signal]:
+    """Collect signals using the pure-quant pipeline — zero LLM calls.
+
+    Runs quant_indicator_node → quant_trend_node → quant_pattern_node →
+    make_trade_decision on each rebalance bar, mirroring exactly what
+    master_portfolio.py does with --no-llm / set_graph_full_quant.
+
+    Returns the same List[Signal] that collect_signals() returns so
+    backtest_universe() can switch between the two transparently.
+    """
+    from quant_nodes import quant_indicator_node, quant_trend_node, quant_pattern_node
+    from decision_agent_quant import make_trade_decision
+
+    _DIR = {"BUY": 1, "SELL": -1, "SHORT": -1, "HOLD": 0}
+    signals: list[Signal] = []
+
+    for idx in tqdm(
+        rebalance_idxs,
+        desc=f"  {symbol:<6} quant",
+        unit="bar",
+        leave=False,
+        dynamic_ncols=True,
+    ):
+        kline = window_to_kline(df, idx)
+        state: dict = {
+            "kline_data": kline,
+            "time_frame": "1d",
+            "stock_name": symbol,
+            "messages":   [],
+        }
+        state.update(quant_indicator_node(state))
+        state.update(quant_trend_node(state))
+        state.update(quant_pattern_node(state))
+
+        trade = make_trade_decision(state, weights=weights, thresholds=thresholds)
+        direction = _DIR.get(trade.decision, 0)
+
+        signals.append(Signal(
+            decision_idx      = idx,
+            direction         = direction,
+            confidence        = round(abs(trade.combined_signal), 4),
+            risk_reward_ratio = trade.risk_reward_ratio if trade.risk_reward_ratio > 0 else 2.0,
+            date              = str(df["Datetime"].iloc[idx].date()),
+            note              = trade.decision_rationale[:200],
+        ))
+
+    return signals
+
+
 # ---------- Backtest orchestration (deterministic engine: backtest_engine.py) ----------
 
 async def backtest_universe(
@@ -148,10 +216,18 @@ async def backtest_universe(
     out_dir: Path | str = "backtest_results",
     cfg: SimConfig | None = None,
     oos_start: str | None = None,
+    use_llm: bool = True,
+    quant_weights: dict | None = None,
+    quant_thresholds: dict | None = None,
 ) -> dict:
     """
-    Collect agent signals per symbol, then run the deterministic backtest engine
+    Collect signals per symbol, then run the deterministic backtest engine
     (with risk overlays + costs) and trivial baselines for comparison.
+
+    use_llm=True  (default): signals via OpenAI Agents SDK (quant_agents.py)
+    use_llm=False           : signals via pure-quant pipeline (quant_nodes.py +
+                              decision_agent_quant.py) — zero LLM calls, matches
+                              master_portfolio.py --no-llm exactly.
 
     oos_start: optional 'YYYY-MM-DD' — also reports agent metrics on the
     out-of-sample slice (decisions on/after that date) to detect overfitting.
@@ -167,6 +243,12 @@ async def backtest_universe(
     baseline_rows: list[dict] = []
 
     symbols = list(symbols)
+    mode_label = "LLM agents (OpenAI)" if use_llm else "pure-quant (no LLM)"
+    print(f"  Signal mode : {mode_label}")
+    print(f"  Symbols     : {', '.join(symbols)}")
+    print(f"  Period      : {period}  |  cadence: {cadence}")
+    print()
+
     sym_bar = tqdm(symbols, desc="symbols", unit="sym", dynamic_ncols=True)
     for symbol in sym_bar:
         sym_bar.set_postfix_str(f"fetching {symbol}")
@@ -175,7 +257,14 @@ async def backtest_universe(
         sym_bar.set_postfix_str(f"{symbol}: {len(df)}b / {len(idxs)} decisions")
         histories[symbol] = df
 
-        signals = await collect_signals(symbol, df, idxs, concurrency=concurrency)
+        if use_llm:
+            signals = await collect_signals(symbol, df, idxs, concurrency=concurrency)
+        else:
+            signals = collect_signals_quant(
+                symbol, df, idxs,
+                weights=quant_weights,
+                thresholds=quant_thresholds,
+            )
         all_signals[symbol] = signals
 
         sim = simulate(symbol, df, signals, cfg)
@@ -251,7 +340,7 @@ async def backtest_universe(
         n_beat = int(baseline_df["beats_sma_baseline"].sum())
         print(f"\nAgent beats 200dma trend-follower on {n_beat}/{len(baseline_df)} symbols.")
         if n_beat <= len(baseline_df) / 2:
-            print("⚠️  Agent does NOT cleanly beat the dumb 200dma baseline — "
+            print("[WARN] Agent does NOT cleanly beat the dumb 200dma baseline -- "
                   "do not add complexity until it does (see docs/BACKTEST_IMPROVEMENT_ROADMAP.md).")
 
     return {"summary": summary_df, "baselines": baseline_df,
@@ -279,6 +368,16 @@ def main():
     parser.add_argument("--no-short", action="store_true", help="Long-only (drop SHORT signals)")
     parser.add_argument("--oos-start", default=None,
                         help="Report out-of-sample metrics for decisions on/after YYYY-MM-DD")
+    parser.add_argument(
+        "--no-llm",
+        action="store_true",
+        help=(
+            "Use the pure-quant pipeline (zero LLM calls). "
+            "Runs quant_indicator_node → quant_trend_node → quant_pattern_node → "
+            "make_trade_decision, matching master_portfolio.py --no-llm exactly. "
+            "No OpenAI API key required."
+        ),
+    )
     args = parser.parse_args()
 
     cfg = SimConfig(
@@ -300,6 +399,7 @@ def main():
         out_dir=args.out,
         cfg=cfg,
         oos_start=args.oos_start,
+        use_llm=not args.no_llm,
     ))
 
 

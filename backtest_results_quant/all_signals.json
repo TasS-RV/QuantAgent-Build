@@ -1,0 +1,1274 @@
+{
+  "AAPL": [
+    {
+      "decision_idx": 62,
+      "direction": 0,
+      "confidence": 0.12,
+      "risk_reward_ratio": 0.74,
+      "date": "2025-09-05",
+      "note": "combined=+0.120 [Weak] | ind=+0.771 | trend=-0.471 | pat=+0.000 | trend_dir=Uptrend | pattern=Harami + 1 more (0% conf)"
+    },
+    {
+      "decision_idx": 67,
+      "direction": 0,
+      "confidence": 0.06,
+      "risk_reward_ratio": 1.54,
+      "date": "2025-09-12",
+      "note": "combined=+0.060 [Weak] | ind=-0.129 | trend=+0.279 | pat=+0.000 | trend_dir=Uptrend | pattern=None (0% conf)"
+    },
+    {
+      "decision_idx": 72,
+      "direction": 0,
+      "confidence": 0.0724,
+      "risk_reward_ratio": 0.59,
+      "date": "2025-09-19",
+      "note": "combined=+0.072 [Weak] | ind=+0.654 | trend=-0.473 | pat=+0.000 | trend_dir=Uptrend | pattern=Engulfing + 1 more (0% conf)"
+    },
+    {
+      "decision_idx": 77,
+      "direction": 0,
+      "confidence": 0.0764,
+      "risk_reward_ratio": 0.45,
+      "date": "2025-09-26",
+      "note": "combined=+0.076 [Weak] | ind=+0.914 | trend=-0.616 | pat=-0.214 | trend_dir=Uptrend | pattern=Harami (21% conf)"
+    },
+    {
+      "decision_idx": 82,
+      "direction": 1,
+      "confidence": 0.248,
+      "risk_reward_ratio": 0.89,
+      "date": "2025-10-03",
+      "note": "combined=+0.248 [Weak] | ind=+0.809 | trend=-0.296 | pat=+0.214 | trend_dir=Uptrend | pattern=Hammer + 2 more (21% conf)"
+    },
+    {
+      "decision_idx": 87,
+      "direction": -1,
+      "confidence": 0.6156,
+      "risk_reward_ratio": 0.09,
+      "date": "2025-10-10",
+      "note": "combined=-0.616 [Strong] | ind=-0.539 | trend=-1.000 | pat=+0.000 | trend_dir=Uptrend | pattern=Harami + 1 more (0% conf)"
+    },
+    {
+      "decision_idx": 92,
+      "direction": 1,
+      "confidence": 0.2382,
+      "risk_reward_ratio": 2.0,
+      "date": "2025-10-17",
+      "note": "combined=+0.238 [Weak] | ind=-0.280 | trend=+0.661 | pat=+0.429 | trend_dir=Uptrend | pattern=Harami + 1 more (43% conf)"
+    },
+    {
+      "decision_idx": 97,
+      "direction": 1,
+      "confidence": 0.3762,
+      "risk_reward_ratio": 1.28,
+      "date": "2025-10-24",
+      "note": "combined=+0.376 [Moderate] | ind=+0.697 | trend=+0.029 | pat=+0.429 | trend_dir=Uptrend | pattern=Harami + 1 more (43% conf)"
+    },
+    {
+      "decision_idx": 102,
+      "direction": 1,
+      "confidence": 0.2842,
+      "risk_reward_ratio": 0.7,
+      "date": "2025-10-31",
+      "note": "combined=+0.284 [Moderate] | ind=+0.838 | trend=-0.342 | pat=+0.429 | trend_dir=Uptrend | pattern=Marubozu + 1 more (43% conf)"
+    },
+    {
+      "decision_idx": 107,
+      "direction": 1,
+      "confidence": 0.3,
+      "risk_reward_ratio": 1.39,
+      "date": "2025-11-07",
+      "note": "combined=+0.300 [Moderate] | ind=+0.334 | trend=+0.309 | pat=+0.214 | trend_dir=Uptrend | pattern=Hammer (21% conf)"
+    },
+    {
+      "decision_idx": 112,
+      "direction": 1,
+      "confidence": 0.2232,
+      "risk_reward_ratio": 1.29,
+      "date": "2025-11-14",
+      "note": "combined=+0.223 [Weak] | ind=+0.262 | trend=+0.296 | pat=+0.000 | trend_dir=Uptrend | pattern=Harami + 1 more (0% conf)"
+    },
+    {
+      "decision_idx": 117,
+      "direction": 1,
+      "confidence": 0.1732,
+      "risk_reward_ratio": 1.34,
+      "date": "2025-11-21",
+      "note": "combined=+0.173 [Weak] | ind=-0.140 | trend=+0.466 | pat=+0.214 | trend_dir=Uptrend | pattern=Engulfing (21% conf)"
+    },
+    {
+      "decision_idx": 121,
+      "direction": 1,
+      "confidence": 0.3486,
+      "risk_reward_ratio": 0.96,
+      "date": "2025-11-28",
+      "note": "combined=+0.349 [Moderate] | ind=+0.680 | trend=-0.023 | pat=+0.429 | trend_dir=Uptrend | pattern=Engulfing + 1 more (43% conf)"
+    },
+    {
+      "decision_idx": 126,
+      "direction": 1,
+      "confidence": 0.3276,
+      "risk_reward_ratio": 1.19,
+      "date": "2025-12-05",
+      "note": "combined=+0.328 [Moderate] | ind=+0.479 | trend=+0.340 | pat=+0.000 | trend_dir=Uptrend | pattern=None (0% conf)"
+    },
+    {
+      "decision_idx": 131,
+      "direction": 1,
+      "confidence": 0.1656,
+      "risk_reward_ratio": 1.53,
+      "date": "2025-12-12",
+      "note": "combined=+0.166 [Weak] | ind=-0.166 | trend=+0.473 | pat=+0.214 | trend_dir=Uptrend | pattern=Doji (21% conf)"
+    },
+    {
+      "decision_idx": 136,
+      "direction": 1,
+      "confidence": 0.1636,
+      "risk_reward_ratio": 2.0,
+      "date": "2025-12-19",
+      "note": "combined=+0.164 [Weak] | ind=-0.646 | trend=+0.948 | pat=+0.214 | trend_dir=Uptrend | pattern=Engulfing + 2 more (21% conf)"
+    },
+    {
+      "decision_idx": 140,
+      "direction": 1,
+      "confidence": 0.2444,
+      "risk_reward_ratio": 2.0,
+      "date": "2025-12-26",
+      "note": "combined=+0.244 [Weak] | ind=-0.347 | trend=+0.851 | pat=+0.214 | trend_dir=Uptrend | pattern=Engulfing (21% conf)"
+    },
+    {
+      "decision_idx": 144,
+      "direction": 1,
+      "confidence": 0.246,
+      "risk_reward_ratio": 2.0,
+      "date": "2026-01-02",
+      "note": "combined=+0.246 [Weak] | ind=-0.446 | trend=+0.954 | pat=+0.214 | trend_dir=Uptrend | pattern=Doji (21% conf)"
+    },
+    {
+      "decision_idx": 149,
+      "direction": -1,
+      "confidence": 0.728,
+      "risk_reward_ratio": 0.18,
+      "date": "2026-01-09",
+      "note": "combined=-0.728 [Strong] | ind=-0.927 | trend=-1.000 | pat=+0.214 | trend_dir=Uptrend | pattern=Doji (21% conf)"
+    },
+    {
+      "decision_idx": 154,
+      "direction": 0,
+      "confidence": 0.0798,
+      "risk_reward_ratio": 0.05,
+      "date": "2026-01-16",
+      "note": "combined=-0.080 [Weak] | ind=-0.957 | trend=+0.972 | pat=-0.429 | trend_dir=Downtrend | pattern=Engulfing + 1 more (43% conf)"
+    },
+    {
+      "decision_idx": 158,
+      "direction": 0,
+      "confidence": 0.022,
+      "risk_reward_ratio": 2.83,
+      "date": "2026-01-23",
+      "note": "combined=+0.022 [Weak] | ind=-0.982 | trend=+0.930 | pat=+0.214 | trend_dir=Downtrend | pattern=Harami (21% conf)"
+    },
+    {
+      "decision_idx": 163,
+      "direction": 1,
+      "confidence": 0.1912,
+      "risk_reward_ratio": 1.08,
+      "date": "2026-01-30",
+      "note": "combined=+0.191 [Weak] | ind=+0.598 | trend=-0.120 | pat=+0.000 | trend_dir=Downtrend | pattern=ShootingStar + 1 more (0% conf)"
+    },
+    {
+      "decision_idx": 168,
+      "direction": 1,
+      "confidence": 0.7652,
+      "risk_reward_ratio": 0.18,
+      "date": "2026-02-06",
+      "note": "combined=+0.765 [Strong] | ind=+0.913 | trend=+1.000 | pat=+0.000 | trend_dir=Downtrend | pattern=Harami + 1 more (0% conf)"
+    },
+    {
+      "decision_idx": 173,
+      "direction": 0,
+      "confidence": 0.1182,
+      "risk_reward_ratio": 0.87,
+      "date": "2026-02-13",
+      "note": "combined=-0.118 [Weak] | ind=-0.333 | trend=+0.252 | pat=-0.429 | trend_dir=Downtrend | pattern=Engulfing + 1 more (43% conf)"
+    },
+    {
+      "decision_idx": 177,
+      "direction": -1,
+      "confidence": 0.3212,
+      "risk_reward_ratio": 4.0,
+      "date": "2026-02-20",
+      "note": "combined=-0.321 [Moderate] | ind=-0.358 | trend=-0.445 | pat=+0.000 | trend_dir=Downtrend | pattern=Engulfing + 1 more (0% conf)"
+    },
+    {
+      "decision_idx": 182,
+      "direction": 0,
+      "confidence": 0.082,
+      "risk_reward_ratio": 1.46,
+      "date": "2026-02-27",
+      "note": "combined=-0.082 [Weak] | ind=+0.021 | trend=-0.226 | pat=+0.000 | trend_dir=Downtrend | pattern=None (0% conf)"
+    },
+    {
+      "decision_idx": 187,
+      "direction": 0,
+      "confidence": 0.116,
+      "risk_reward_ratio": 0.96,
+      "date": "2026-03-06",
+      "note": "combined=-0.116 [Weak] | ind=-0.656 | trend=+0.259 | pat=+0.214 | trend_dir=Downtrend | pattern=Engulfing + 2 more (21% conf)"
+    },
+    {
+      "decision_idx": 192,
+      "direction": 0,
+      "confidence": 0.0498,
+      "risk_reward_ratio": 2.22,
+      "date": "2026-03-13",
+      "note": "combined=+0.050 [Weak] | ind=-0.780 | trend=+0.690 | pat=+0.429 | trend_dir=Downtrend | pattern=Engulfing + 1 more (43% conf)"
+    },
+    {
+      "decision_idx": 197,
+      "direction": 0,
+      "confidence": 0.0198,
+      "risk_reward_ratio": 2.65,
+      "date": "2026-03-20",
+      "note": "combined=+0.020 [Weak] | ind=-0.798 | trend=+0.633 | pat=+0.429 | trend_dir=Downtrend | pattern=Harami + 1 more (43% conf)"
+    },
+    {
+      "decision_idx": 202,
+      "direction": 0,
+      "confidence": 0.054,
+      "risk_reward_ratio": 0.8,
+      "date": "2026-03-27",
+      "note": "combined=-0.054 [Weak] | ind=-0.528 | trend=+0.500 | pat=-0.214 | trend_dir=Downtrend | pattern=Engulfing (21% conf)"
+    },
+    {
+      "decision_idx": 211,
+      "direction": 1,
+      "confidence": 0.1564,
+      "risk_reward_ratio": 0.95,
+      "date": "2026-04-10",
+      "note": "combined=+0.156 [Weak] | ind=+0.740 | trend=-0.349 | pat=+0.000 | trend_dir=Downtrend | pattern=ShootingStar + 1 more (0% conf)"
+    },
+    {
+      "decision_idx": 216,
+      "direction": 0,
+      "confidence": 0.1162,
+      "risk_reward_ratio": 0.11,
+      "date": "2026-04-17",
+      "note": "combined=+0.116 [Weak] | ind=+0.862 | trend=-1.000 | pat=+0.857 | trend_dir=Downtrend | pattern=Engulfing + 3 more (86% conf)"
+    },
+    {
+      "decision_idx": 221,
+      "direction": 0,
+      "confidence": 0.0712,
+      "risk_reward_ratio": 2.35,
+      "date": "2026-04-24",
+      "note": "combined=-0.071 [Weak] | ind=+0.799 | trend=-0.977 | pat=+0.000 | trend_dir=Downtrend | pattern=None (0% conf)"
+    },
+    {
+      "decision_idx": 226,
+      "direction": 1,
+      "confidence": 0.6748,
+      "risk_reward_ratio": 0.08,
+      "date": "2026-05-01",
+      "note": "combined=+0.675 [Strong] | ind=+0.794 | trend=+1.000 | pat=-0.214 | trend_dir=Downtrend | pattern=ShootingStar (21% conf)"
+    },
+    {
+      "decision_idx": 231,
+      "direction": 1,
+      "confidence": 0.824,
+      "risk_reward_ratio": 0.25,
+      "date": "2026-05-08",
+      "note": "combined=+0.824 [Strong] | ind=+0.953 | trend=+1.000 | pat=+0.214 | trend_dir=Uptrend | pattern=Marubozu (21% conf)"
+    },
+    {
+      "decision_idx": 236,
+      "direction": 0,
+      "confidence": 0.0332,
+      "risk_reward_ratio": 0.18,
+      "date": "2026-05-15",
+      "note": "combined=+0.033 [Weak] | ind=+0.972 | trend=-0.889 | pat=+0.000 | trend_dir=Uptrend | pattern=Engulfing + 1 more (0% conf)"
+    },
+    {
+      "decision_idx": 241,
+      "direction": 0,
+      "confidence": 0.0176,
+      "risk_reward_ratio": 0.28,
+      "date": "2026-05-22",
+      "note": "combined=+0.018 [Weak] | ind=+0.977 | trend=-0.826 | pat=-0.214 | trend_dir=Uptrend | pattern=Engulfing (21% conf)"
+    },
+    {
+      "decision_idx": 245,
+      "direction": 1,
+      "confidence": 0.2372,
+      "risk_reward_ratio": 0.74,
+      "date": "2026-05-29",
+      "note": "combined=+0.237 [Weak] | ind=+0.946 | trend=-0.546 | pat=+0.386 | trend_dir=Uptrend | pattern=Engulfing + 1 more (39% conf)"
+    }
+  ],
+  "TSLA": [
+    {
+      "decision_idx": 62,
+      "direction": 0,
+      "confidence": 0.0292,
+      "risk_reward_ratio": 0.37,
+      "date": "2025-09-05",
+      "note": "combined=+0.029 [Weak] | ind=+0.598 | trend=-0.632 | pat=+0.214 | trend_dir=Uptrend | pattern=Doji (21% conf)"
+    },
+    {
+      "decision_idx": 67,
+      "direction": 1,
+      "confidence": 0.828,
+      "risk_reward_ratio": 0.79,
+      "date": "2025-09-12",
+      "note": "combined=+0.828 [Strong] | ind=+0.963 | trend=+1.000 | pat=+0.214 | trend_dir=Uptrend | pattern=Engulfing + 2 more (21% conf)"
+    },
+    {
+      "decision_idx": 72,
+      "direction": 1,
+      "confidence": 0.7884,
+      "risk_reward_ratio": 0.33,
+      "date": "2025-09-19",
+      "note": "combined=+0.788 [Strong] | ind=+0.971 | trend=+1.000 | pat=+0.000 | trend_dir=Uptrend | pattern=DarkCloudCover + 1 more (0% conf)"
+    },
+    {
+      "decision_idx": 77,
+      "direction": 0,
+      "confidence": 0.0024,
+      "risk_reward_ratio": 0.19,
+      "date": "2025-09-26",
+      "note": "combined=+0.002 [Weak] | ind=+0.854 | trend=-0.848 | pat=+0.000 | trend_dir=Uptrend | pattern=Engulfing + 1 more (0% conf)"
+    },
+    {
+      "decision_idx": 82,
+      "direction": 0,
+      "confidence": 0.0358,
+      "risk_reward_ratio": 1.09,
+      "date": "2025-10-03",
+      "note": "combined=+0.036 [Weak] | ind=-0.024 | trend=-0.101 | pat=+0.429 | trend_dir=Uptrend | pattern=Engulfing + 3 more (43% conf)"
+    },
+    {
+      "decision_idx": 87,
+      "direction": 0,
+      "confidence": 0.0944,
+      "risk_reward_ratio": 1.73,
+      "date": "2025-10-10",
+      "note": "combined=+0.094 [Weak] | ind=-0.638 | trend=+0.767 | pat=+0.214 | trend_dir=Uptrend | pattern=Engulfing + 2 more (21% conf)"
+    },
+    {
+      "decision_idx": 92,
+      "direction": 1,
+      "confidence": 0.172,
+      "risk_reward_ratio": 1.33,
+      "date": "2025-10-17",
+      "note": "combined=+0.172 [Weak] | ind=-0.150 | trend=+0.473 | pat=+0.214 | trend_dir=Uptrend | pattern=Engulfing + 2 more (21% conf)"
+    },
+    {
+      "decision_idx": 97,
+      "direction": 1,
+      "confidence": 0.4816,
+      "risk_reward_ratio": 1.91,
+      "date": "2025-10-24",
+      "note": "combined=+0.482 [Moderate] | ind=+0.158 | trend=+0.939 | pat=+0.214 | trend_dir=Uptrend | pattern=Engulfing (21% conf)"
+    },
+    {
+      "decision_idx": 102,
+      "direction": 1,
+      "confidence": 0.406,
+      "risk_reward_ratio": 1.6,
+      "date": "2025-10-31",
+      "note": "combined=+0.406 [Moderate] | ind=+0.437 | trend=+0.471 | pat=+0.214 | trend_dir=Uptrend | pattern=Doji (21% conf)"
+    },
+    {
+      "decision_idx": 107,
+      "direction": -1,
+      "confidence": 0.5608,
+      "risk_reward_ratio": 0.07,
+      "date": "2025-11-07",
+      "note": "combined=-0.561 [Strong] | ind=-0.402 | trend=-1.000 | pat=+0.000 | trend_dir=Uptrend | pattern=None (0% conf)"
+    },
+    {
+      "decision_idx": 112,
+      "direction": -1,
+      "confidence": 0.7324,
+      "risk_reward_ratio": 0.24,
+      "date": "2025-11-14",
+      "note": "combined=-0.732 [Strong] | ind=-0.831 | trend=-1.000 | pat=+0.000 | trend_dir=Uptrend | pattern=Engulfing + 1 more (0% conf)"
+    },
+    {
+      "decision_idx": 117,
+      "direction": 0,
+      "confidence": 0.058,
+      "risk_reward_ratio": 2.63,
+      "date": "2025-11-21",
+      "note": "combined=+0.058 [Weak] | ind=-0.855 | trend=+1.000 | pat=+0.000 | trend_dir=Uptrend | pattern=None (0% conf)"
+    },
+    {
+      "decision_idx": 121,
+      "direction": 1,
+      "confidence": 0.2656,
+      "risk_reward_ratio": 1.59,
+      "date": "2025-11-28",
+      "note": "combined=+0.266 [Moderate] | ind=+0.441 | trend=+0.223 | pat=+0.000 | trend_dir=Uptrend | pattern=None (0% conf)"
+    },
+    {
+      "decision_idx": 126,
+      "direction": 0,
+      "confidence": 0.1206,
+      "risk_reward_ratio": 0.41,
+      "date": "2025-12-05",
+      "note": "combined=+0.121 [Weak] | ind=+0.847 | trend=-0.760 | pat=+0.429 | trend_dir=Downtrend | pattern=Marubozu + 1 more (43% conf)"
+    },
+    {
+      "decision_idx": 131,
+      "direction": 0,
+      "confidence": 0.0548,
+      "risk_reward_ratio": 2.07,
+      "date": "2025-12-12",
+      "note": "combined=-0.055 [Weak] | ind=+0.751 | trend=-0.888 | pat=+0.000 | trend_dir=Downtrend | pattern=None (0% conf)"
+    },
+    {
+      "decision_idx": 136,
+      "direction": 0,
+      "confidence": 0.0144,
+      "risk_reward_ratio": 2.15,
+      "date": "2025-12-19",
+      "note": "combined=-0.014 [Weak] | ind=+0.713 | trend=-0.856 | pat=+0.214 | trend_dir=Uptrend | pattern=Harami (21% conf)"
+    },
+    {
+      "decision_idx": 140,
+      "direction": 0,
+      "confidence": 0.0784,
+      "risk_reward_ratio": 0.71,
+      "date": "2025-12-26",
+      "note": "combined=+0.078 [Weak] | ind=+0.489 | trend=-0.400 | pat=+0.214 | trend_dir=Uptrend | pattern=Doji (21% conf)"
+    },
+    {
+      "decision_idx": 144,
+      "direction": 0,
+      "confidence": 0.1152,
+      "risk_reward_ratio": 0.62,
+      "date": "2026-01-02",
+      "note": "combined=-0.115 [Weak] | ind=-0.764 | trend=+0.583 | pat=-0.214 | trend_dir=Uptrend | pattern=Marubozu (21% conf)"
+    },
+    {
+      "decision_idx": 149,
+      "direction": 0,
+      "confidence": 0.1136,
+      "risk_reward_ratio": 1.14,
+      "date": "2026-01-09",
+      "note": "combined=-0.114 [Weak] | ind=-0.676 | trend=+0.285 | pat=+0.214 | trend_dir=Uptrend | pattern=Harami (21% conf)"
+    },
+    {
+      "decision_idx": 154,
+      "direction": 0,
+      "confidence": 0.0468,
+      "risk_reward_ratio": 2.22,
+      "date": "2026-01-16",
+      "note": "combined=+0.047 [Weak] | ind=-0.430 | trend=+0.440 | pat=+0.214 | trend_dir=Uptrend | pattern=Hammer (21% conf)"
+    },
+    {
+      "decision_idx": 158,
+      "direction": 0,
+      "confidence": 0.1356,
+      "risk_reward_ratio": 1.68,
+      "date": "2026-01-23",
+      "note": "combined=+0.136 [Weak] | ind=+0.365 | trend=+0.081 | pat=-0.214 | trend_dir=Uptrend | pattern=Harami (21% conf)"
+    },
+    {
+      "decision_idx": 163,
+      "direction": 0,
+      "confidence": 0.0864,
+      "risk_reward_ratio": 2.26,
+      "date": "2026-01-30",
+      "note": "combined=+0.086 [Weak] | ind=-0.407 | trend=+0.516 | pat=+0.214 | trend_dir=Uptrend | pattern=Harami + 2 more (21% conf)"
+    },
+    {
+      "decision_idx": 168,
+      "direction": 0,
+      "confidence": 0.1006,
+      "risk_reward_ratio": 2.36,
+      "date": "2026-02-06",
+      "note": "combined=+0.101 [Weak] | ind=-0.704 | trend=+0.741 | pat=+0.429 | trend_dir=Uptrend | pattern=MorningStar + 1 more (43% conf)"
+    },
+    {
+      "decision_idx": 173,
+      "direction": 0,
+      "confidence": 0.0616,
+      "risk_reward_ratio": 1.87,
+      "date": "2026-02-13",
+      "note": "combined=+0.062 [Weak] | ind=-0.050 | trend=+0.311 | pat=-0.214 | trend_dir=Downtrend | pattern=Engulfing + 2 more (21% conf)"
+    },
+    {
+      "decision_idx": 177,
+      "direction": 1,
+      "confidence": 0.1998,
+      "risk_reward_ratio": 1.51,
+      "date": "2026-02-20",
+      "note": "combined=+0.200 [Weak] | ind=+0.088 | trend=+0.197 | pat=+0.429 | trend_dir=Downtrend | pattern=Hammer + 1 more (43% conf)"
+    },
+    {
+      "decision_idx": 182,
+      "direction": 0,
+      "confidence": 0.0342,
+      "risk_reward_ratio": 0.97,
+      "date": "2026-02-27",
+      "note": "combined=-0.034 [Weak] | ind=-0.434 | trend=+0.134 | pat=+0.429 | trend_dir=Downtrend | pattern=Engulfing + 1 more (43% conf)"
+    },
+    {
+      "decision_idx": 187,
+      "direction": 0,
+      "confidence": 0.1468,
+      "risk_reward_ratio": 0.98,
+      "date": "2026-03-06",
+      "note": "combined=-0.147 [Weak] | ind=-0.333 | trend=-0.034 | pat=+0.000 | trend_dir=Downtrend | pattern=Engulfing + 1 more (0% conf)"
+    },
+    {
+      "decision_idx": 192,
+      "direction": -1,
+      "confidence": 0.2072,
+      "risk_reward_ratio": 4.0,
+      "date": "2026-03-13",
+      "note": "combined=-0.207 [Weak] | ind=-0.366 | trend=-0.152 | pat=+0.000 | trend_dir=Downtrend | pattern=Engulfing + 1 more (0% conf)"
+    },
+    {
+      "decision_idx": 197,
+      "direction": 0,
+      "confidence": 0.0482,
+      "risk_reward_ratio": 1.4,
+      "date": "2026-03-20",
+      "note": "combined=+0.048 [Weak] | ind=-0.921 | trend=+0.827 | pat=+0.429 | trend_dir=Downtrend | pattern=Harami + 1 more (43% conf)"
+    },
+    {
+      "decision_idx": 202,
+      "direction": -1,
+      "confidence": 0.8478,
+      "risk_reward_ratio": 0.04,
+      "date": "2026-03-27",
+      "note": "combined=-0.848 [Strong] | ind=-0.905 | trend=-1.000 | pat=-0.429 | trend_dir=Downtrend | pattern=ShootingStar + 1 more (43% conf)"
+    },
+    {
+      "decision_idx": 211,
+      "direction": 0,
+      "confidence": 0.14,
+      "risk_reward_ratio": 0.31,
+      "date": "2026-04-10",
+      "note": "combined=-0.140 [Weak] | ind=-0.859 | trend=+0.509 | pat=+0.000 | trend_dir=Downtrend | pattern=Engulfing + 1 more (0% conf)"
+    },
+    {
+      "decision_idx": 216,
+      "direction": 1,
+      "confidence": 0.7448,
+      "risk_reward_ratio": 0.5,
+      "date": "2026-04-17",
+      "note": "combined=+0.745 [Strong] | ind=+0.862 | trend=+1.000 | pat=+0.000 | trend_dir=Downtrend | pattern=None (0% conf)"
+    },
+    {
+      "decision_idx": 221,
+      "direction": 0,
+      "confidence": 0.0876,
+      "risk_reward_ratio": 1.4,
+      "date": "2026-04-24",
+      "note": "combined=-0.088 [Weak] | ind=+0.387 | trend=-0.606 | pat=+0.000 | trend_dir=Downtrend | pattern=Engulfing + 1 more (0% conf)"
+    },
+    {
+      "decision_idx": 226,
+      "direction": -1,
+      "confidence": 0.2206,
+      "risk_reward_ratio": 4.0,
+      "date": "2026-05-01",
+      "note": "combined=-0.221 [Weak] | ind=+0.234 | trend=-1.000 | pat=+0.429 | trend_dir=Downtrend | pattern=Engulfing + 3 more (43% conf)"
+    },
+    {
+      "decision_idx": 231,
+      "direction": 1,
+      "confidence": 0.722,
+      "risk_reward_ratio": 0.67,
+      "date": "2026-05-08",
+      "note": "combined=+0.722 [Strong] | ind=+0.912 | trend=+1.000 | pat=-0.214 | trend_dir=Downtrend | pattern=Engulfing (21% conf)"
+    },
+    {
+      "decision_idx": 236,
+      "direction": 0,
+      "confidence": 0.0594,
+      "risk_reward_ratio": 2.22,
+      "date": "2026-05-15",
+      "note": "combined=-0.059 [Weak] | ind=+0.678 | trend=-0.612 | pat=-0.429 | trend_dir=Uptrend | pattern=Harami + 1 more (43% conf)"
+    },
+    {
+      "decision_idx": 241,
+      "direction": 0,
+      "confidence": 0.0202,
+      "risk_reward_ratio": 0.67,
+      "date": "2026-05-22",
+      "note": "combined=+0.020 [Weak] | ind=+0.092 | trend=-0.470 | pat=+0.857 | trend_dir=Uptrend | pattern=Hammer + 3 more (86% conf)"
+    },
+    {
+      "decision_idx": 245,
+      "direction": 0,
+      "confidence": 0.0008,
+      "risk_reward_ratio": 1.92,
+      "date": "2026-05-29",
+      "note": "combined=-0.001 [Weak] | ind=+0.393 | trend=-0.395 | pat=+0.000 | trend_dir=Uptrend | pattern=None (0% conf)"
+    }
+  ],
+  "NVDA": [
+    {
+      "decision_idx": 62,
+      "direction": -1,
+      "confidence": 0.657,
+      "risk_reward_ratio": 0.52,
+      "date": "2025-09-05",
+      "note": "combined=-0.657 [Strong] | ind=-0.857 | trend=-1.000 | pat=+0.429 | trend_dir=Uptrend | pattern=Engulfing + 1 more (43% conf)"
+    },
+    {
+      "decision_idx": 67,
+      "direction": 1,
+      "confidence": 0.3346,
+      "risk_reward_ratio": 1.98,
+      "date": "2025-09-12",
+      "note": "combined=+0.335 [Moderate] | ind=+0.115 | trend=+0.507 | pat=+0.429 | trend_dir=Uptrend | pattern=Harami + 1 more (43% conf)"
+    },
+    {
+      "decision_idx": 72,
+      "direction": 1,
+      "confidence": 0.3576,
+      "risk_reward_ratio": 1.73,
+      "date": "2025-09-19",
+      "note": "combined=+0.358 [Moderate] | ind=+0.480 | trend=+0.414 | pat=+0.000 | trend_dir=Uptrend | pattern=None (0% conf)"
+    },
+    {
+      "decision_idx": 77,
+      "direction": 1,
+      "confidence": 0.23,
+      "risk_reward_ratio": 1.15,
+      "date": "2025-09-26",
+      "note": "combined=+0.230 [Weak] | ind=+0.286 | trend=+0.182 | pat=+0.214 | trend_dir=Uptrend | pattern=Doji (21% conf)"
+    },
+    {
+      "decision_idx": 82,
+      "direction": 0,
+      "confidence": 0.0216,
+      "risk_reward_ratio": 0.28,
+      "date": "2025-10-03",
+      "note": "combined=+0.022 [Weak] | ind=+0.839 | trend=-0.678 | pat=-0.214 | trend_dir=Uptrend | pattern=ShootingStar (21% conf)"
+    },
+    {
+      "decision_idx": 87,
+      "direction": 0,
+      "confidence": 0.0676,
+      "risk_reward_ratio": 0.81,
+      "date": "2025-10-10",
+      "note": "combined=+0.068 [Weak] | ind=+0.324 | trend=-0.048 | pat=-0.214 | trend_dir=Uptrend | pattern=Engulfing + 2 more (21% conf)"
+    },
+    {
+      "decision_idx": 92,
+      "direction": 0,
+      "confidence": 0.145,
+      "risk_reward_ratio": 0.86,
+      "date": "2025-10-17",
+      "note": "combined=-0.145 [Weak] | ind=-0.524 | trend=-0.053 | pat=+0.429 | trend_dir=Uptrend | pattern=Engulfing + 3 more (43% conf)"
+    },
+    {
+      "decision_idx": 97,
+      "direction": -1,
+      "confidence": 0.1572,
+      "risk_reward_ratio": 4.0,
+      "date": "2025-10-24",
+      "note": "combined=-0.157 [Weak] | ind=-0.083 | trend=-0.310 | pat=+0.000 | trend_dir=Uptrend | pattern=Harami + 1 more (0% conf)"
+    },
+    {
+      "decision_idx": 102,
+      "direction": 0,
+      "confidence": 0.0676,
+      "risk_reward_ratio": 2.11,
+      "date": "2025-10-31",
+      "note": "combined=-0.068 [Weak] | ind=+0.827 | trend=-0.996 | pat=+0.000 | trend_dir=Uptrend | pattern=None (0% conf)"
+    },
+    {
+      "decision_idx": 107,
+      "direction": 0,
+      "confidence": 0.1452,
+      "risk_reward_ratio": 1.22,
+      "date": "2025-11-07",
+      "note": "combined=+0.145 [Weak] | ind=-0.291 | trend=+0.547 | pat=+0.214 | trend_dir=Uptrend | pattern=Hammer (21% conf)"
+    },
+    {
+      "decision_idx": 112,
+      "direction": 0,
+      "confidence": 0.0604,
+      "risk_reward_ratio": 1.01,
+      "date": "2025-11-14",
+      "note": "combined=+0.060 [Weak] | ind=-0.529 | trend=+0.573 | pat=+0.214 | trend_dir=Uptrend | pattern=Piercing (21% conf)"
+    },
+    {
+      "decision_idx": 117,
+      "direction": -1,
+      "confidence": 0.7476,
+      "risk_reward_ratio": 0.13,
+      "date": "2025-11-21",
+      "note": "combined=-0.748 [Strong] | ind=-0.762 | trend=-1.000 | pat=-0.214 | trend_dir=Uptrend | pattern=Engulfing + 2 more (21% conf)"
+    },
+    {
+      "decision_idx": 121,
+      "direction": 1,
+      "confidence": 0.18,
+      "risk_reward_ratio": 1.77,
+      "date": "2025-11-28",
+      "note": "combined=+0.180 [Weak] | ind=-0.657 | trend=+1.000 | pat=+0.214 | trend_dir=Uptrend | pattern=Hammer (21% conf)"
+    },
+    {
+      "decision_idx": 126,
+      "direction": 1,
+      "confidence": 0.2582,
+      "risk_reward_ratio": 1.53,
+      "date": "2025-12-05",
+      "note": "combined=+0.258 [Moderate] | ind=-0.048 | trend=+0.479 | pat=+0.429 | trend_dir=Uptrend | pattern=Engulfing + 1 more (43% conf)"
+    },
+    {
+      "decision_idx": 131,
+      "direction": 1,
+      "confidence": 0.1732,
+      "risk_reward_ratio": 2.0,
+      "date": "2025-12-12",
+      "note": "combined=+0.173 [Weak] | ind=-0.275 | trend=+0.708 | pat=+0.000 | trend_dir=Downtrend | pattern=Engulfing + 1 more (0% conf)"
+    },
+    {
+      "decision_idx": 136,
+      "direction": 0,
+      "confidence": 0.027,
+      "risk_reward_ratio": 1.49,
+      "date": "2025-12-19",
+      "note": "combined=+0.027 [Weak] | ind=-0.172 | trend=+0.025 | pat=+0.429 | trend_dir=Downtrend | pattern=Harami + 1 more (43% conf)"
+    },
+    {
+      "decision_idx": 140,
+      "direction": 0,
+      "confidence": 0.1146,
+      "risk_reward_ratio": 0.57,
+      "date": "2025-12-26",
+      "note": "combined=+0.115 [Weak] | ind=+0.800 | trend=-0.728 | pat=+0.429 | trend_dir=Downtrend | pattern=Engulfing + 3 more (43% conf)"
+    },
+    {
+      "decision_idx": 144,
+      "direction": 0,
+      "confidence": 0.038,
+      "risk_reward_ratio": 0.83,
+      "date": "2026-01-02",
+      "note": "combined=+0.038 [Weak] | ind=+0.742 | trend=-0.540 | pat=-0.214 | trend_dir=Downtrend | pattern=Engulfing (21% conf)"
+    },
+    {
+      "decision_idx": 149,
+      "direction": 0,
+      "confidence": 0.0136,
+      "risk_reward_ratio": 1.79,
+      "date": "2026-01-09",
+      "note": "combined=-0.014 [Weak] | ind=+0.051 | trend=-0.192 | pat=+0.214 | trend_dir=Downtrend | pattern=Engulfing + 2 more (21% conf)"
+    },
+    {
+      "decision_idx": 154,
+      "direction": -1,
+      "confidence": 0.2828,
+      "risk_reward_ratio": 4.0,
+      "date": "2026-01-16",
+      "note": "combined=-0.283 [Moderate] | ind=-0.194 | trend=-0.406 | pat=-0.214 | trend_dir=Downtrend | pattern=Engulfing + 2 more (21% conf)"
+    },
+    {
+      "decision_idx": 158,
+      "direction": -1,
+      "confidence": 0.184,
+      "risk_reward_ratio": 4.0,
+      "date": "2026-01-23",
+      "note": "combined=-0.184 [Weak] | ind=+0.170 | trend=-0.630 | pat=+0.000 | trend_dir=Downtrend | pattern=Engulfing + 1 more (0% conf)"
+    },
+    {
+      "decision_idx": 163,
+      "direction": 0,
+      "confidence": 0.0536,
+      "risk_reward_ratio": 0.49,
+      "date": "2026-01-30",
+      "note": "combined=+0.054 [Weak] | ind=+0.691 | trend=-0.664 | pat=+0.214 | trend_dir=Downtrend | pattern=Doji (21% conf)"
+    },
+    {
+      "decision_idx": 168,
+      "direction": -1,
+      "confidence": 0.152,
+      "risk_reward_ratio": 4.0,
+      "date": "2026-02-06",
+      "note": "combined=-0.152 [Weak] | ind=-0.314 | trend=-0.066 | pat=+0.000 | trend_dir=Uptrend | pattern=None (0% conf)"
+    },
+    {
+      "decision_idx": 173,
+      "direction": 1,
+      "confidence": 0.1504,
+      "risk_reward_ratio": 0.96,
+      "date": "2026-02-13",
+      "note": "combined=+0.150 [Weak] | ind=-0.056 | trend=+0.539 | pat=-0.214 | trend_dir=Uptrend | pattern=Marubozu (21% conf)"
+    },
+    {
+      "decision_idx": 177,
+      "direction": 1,
+      "confidence": 0.2404,
+      "risk_reward_ratio": 0.51,
+      "date": "2026-02-20",
+      "note": "combined=+0.240 [Weak] | ind=+0.723 | trend=-0.229 | pat=+0.214 | trend_dir=Uptrend | pattern=Hammer (21% conf)"
+    },
+    {
+      "decision_idx": 182,
+      "direction": -1,
+      "confidence": 0.5924,
+      "risk_reward_ratio": 0.08,
+      "date": "2026-02-27",
+      "note": "combined=-0.592 [Strong] | ind=-0.588 | trend=-1.000 | pat=+0.214 | trend_dir=Uptrend | pattern=Doji (21% conf)"
+    },
+    {
+      "decision_idx": 187,
+      "direction": 0,
+      "confidence": 0.0976,
+      "risk_reward_ratio": 1.54,
+      "date": "2026-03-06",
+      "note": "combined=+0.098 [Weak] | ind=-0.753 | trend=+0.997 | pat=+0.000 | trend_dir=Uptrend | pattern=Engulfing + 1 more (0% conf)"
+    },
+    {
+      "decision_idx": 192,
+      "direction": 1,
+      "confidence": 0.2058,
+      "risk_reward_ratio": 1.21,
+      "date": "2026-03-13",
+      "note": "combined=+0.206 [Weak] | ind=-0.293 | trend=+0.593 | pat=+0.429 | trend_dir=Uptrend | pattern=Engulfing + 1 more (43% conf)"
+    },
+    {
+      "decision_idx": 197,
+      "direction": -1,
+      "confidence": 0.7,
+      "risk_reward_ratio": 0.04,
+      "date": "2026-03-20",
+      "note": "combined=-0.700 [Strong] | ind=-0.750 | trend=-1.000 | pat=+0.000 | trend_dir=Downtrend | pattern=Engulfing + 3 more (0% conf)"
+    },
+    {
+      "decision_idx": 202,
+      "direction": -1,
+      "confidence": 0.7504,
+      "risk_reward_ratio": 0.16,
+      "date": "2026-03-27",
+      "note": "combined=-0.750 [Strong] | ind=-0.876 | trend=-1.000 | pat=+0.000 | trend_dir=Downtrend | pattern=ShootingStar + 3 more (0% conf)"
+    },
+    {
+      "decision_idx": 211,
+      "direction": 1,
+      "confidence": 0.748,
+      "risk_reward_ratio": 0.03,
+      "date": "2026-04-10",
+      "note": "combined=+0.748 [Strong] | ind=+0.870 | trend=+1.000 | pat=+0.000 | trend_dir=Downtrend | pattern=None (0% conf)"
+    },
+    {
+      "decision_idx": 216,
+      "direction": 1,
+      "confidence": 0.8136,
+      "risk_reward_ratio": 0.49,
+      "date": "2026-04-17",
+      "note": "combined=+0.814 [Strong] | ind=+0.927 | trend=+1.000 | pat=+0.214 | trend_dir=Downtrend | pattern=Marubozu (21% conf)"
+    },
+    {
+      "decision_idx": 221,
+      "direction": 1,
+      "confidence": 0.752,
+      "risk_reward_ratio": 0.19,
+      "date": "2026-04-24",
+      "note": "combined=+0.752 [Strong] | ind=+0.880 | trend=+1.000 | pat=+0.000 | trend_dir=Uptrend | pattern=Engulfing + 1 more (0% conf)"
+    },
+    {
+      "decision_idx": 226,
+      "direction": 0,
+      "confidence": 0.1296,
+      "risk_reward_ratio": 1.8,
+      "date": "2026-05-01",
+      "note": "combined=-0.130 [Weak] | ind=-0.163 | trend=-0.161 | pat=+0.000 | trend_dir=Uptrend | pattern=None (0% conf)"
+    },
+    {
+      "decision_idx": 231,
+      "direction": 0,
+      "confidence": 0.0964,
+      "risk_reward_ratio": 2.32,
+      "date": "2026-05-08",
+      "note": "combined=-0.096 [Weak] | ind=+0.591 | trend=-0.725 | pat=-0.214 | trend_dir=Uptrend | pattern=ShootingStar (21% conf)"
+    },
+    {
+      "decision_idx": 236,
+      "direction": 0,
+      "confidence": 0.0804,
+      "risk_reward_ratio": 0.5,
+      "date": "2026-05-15",
+      "note": "combined=+0.080 [Weak] | ind=+0.826 | trend=-0.625 | pat=+0.000 | trend_dir=Uptrend | pattern=None (0% conf)"
+    },
+    {
+      "decision_idx": 241,
+      "direction": 0,
+      "confidence": 0.12,
+      "risk_reward_ratio": 1.39,
+      "date": "2026-05-22",
+      "note": "combined=+0.120 [Weak] | ind=-0.032 | trend=+0.332 | pat=+0.000 | trend_dir=Uptrend | pattern=Marubozu + 1 more (0% conf)"
+    },
+    {
+      "decision_idx": 245,
+      "direction": 0,
+      "confidence": 0.0636,
+      "risk_reward_ratio": 1.89,
+      "date": "2026-05-29",
+      "note": "combined=+0.064 [Weak] | ind=-0.761 | trend=+0.813 | pat=+0.214 | trend_dir=Uptrend | pattern=Engulfing + 2 more (21% conf)"
+    }
+  ],
+  "BTC-USD": [
+    {
+      "decision_idx": 63,
+      "direction": 1,
+      "confidence": 0.2184,
+      "risk_reward_ratio": 2.0,
+      "date": "2025-08-08",
+      "note": "combined=+0.218 [Weak] | ind=+0.007 | trend=+0.539 | pat=+0.000 | trend_dir=Uptrend | pattern=Engulfing + 1 more (0% conf)"
+    },
+    {
+      "decision_idx": 70,
+      "direction": 1,
+      "confidence": 0.4252,
+      "risk_reward_ratio": 1.79,
+      "date": "2025-08-15",
+      "note": "combined=+0.425 [Moderate] | ind=+0.231 | trend=+0.725 | pat=+0.214 | trend_dir=Uptrend | pattern=Engulfing (21% conf)"
+    },
+    {
+      "decision_idx": 77,
+      "direction": 0,
+      "confidence": 0.036,
+      "risk_reward_ratio": 0.68,
+      "date": "2025-08-22",
+      "note": "combined=-0.036 [Weak] | ind=-0.551 | trend=+0.461 | pat=+0.000 | trend_dir=Uptrend | pattern=Engulfing + 1 more (0% conf)"
+    },
+    {
+      "decision_idx": 84,
+      "direction": -1,
+      "confidence": 0.6844,
+      "risk_reward_ratio": 0.03,
+      "date": "2025-08-29",
+      "note": "combined=-0.684 [Strong] | ind=-0.818 | trend=-1.000 | pat=+0.214 | trend_dir=Uptrend | pattern=Engulfing (21% conf)"
+    },
+    {
+      "decision_idx": 91,
+      "direction": 0,
+      "confidence": 0.0926,
+      "risk_reward_ratio": 1.25,
+      "date": "2025-09-05",
+      "note": "combined=+0.093 [Weak] | ind=-0.249 | trend=+0.266 | pat=+0.429 | trend_dir=Downtrend | pattern=Engulfing + 1 more (43% conf)"
+    },
+    {
+      "decision_idx": 98,
+      "direction": 0,
+      "confidence": 0.0712,
+      "risk_reward_ratio": 2.21,
+      "date": "2025-09-12",
+      "note": "combined=-0.071 [Weak] | ind=+0.822 | trend=-1.000 | pat=+0.000 | trend_dir=Downtrend | pattern=None (0% conf)"
+    },
+    {
+      "decision_idx": 105,
+      "direction": 0,
+      "confidence": 0.03,
+      "risk_reward_ratio": 0.63,
+      "date": "2025-09-19",
+      "note": "combined=+0.030 [Weak] | ind=+0.658 | trend=-0.690 | pat=+0.214 | trend_dir=Downtrend | pattern=Engulfing + 2 more (21% conf)"
+    },
+    {
+      "decision_idx": 112,
+      "direction": 0,
+      "confidence": 0.1188,
+      "risk_reward_ratio": 0.83,
+      "date": "2025-09-26",
+      "note": "combined=-0.119 [Weak] | ind=-0.828 | trend=+0.424 | pat=+0.214 | trend_dir=Downtrend | pattern=Engulfing (21% conf)"
+    },
+    {
+      "decision_idx": 119,
+      "direction": 1,
+      "confidence": 0.7652,
+      "risk_reward_ratio": 0.39,
+      "date": "2025-10-03",
+      "note": "combined=+0.765 [Strong] | ind=+0.913 | trend=+1.000 | pat=+0.000 | trend_dir=Downtrend | pattern=Harami + 1 more (0% conf)"
+    },
+    {
+      "decision_idx": 126,
+      "direction": 1,
+      "confidence": 0.2012,
+      "risk_reward_ratio": 1.44,
+      "date": "2025-10-10",
+      "note": "combined=+0.201 [Weak] | ind=-0.037 | trend=+0.540 | pat=+0.000 | trend_dir=Uptrend | pattern=None (0% conf)"
+    },
+    {
+      "decision_idx": 133,
+      "direction": -1,
+      "confidence": 0.665,
+      "risk_reward_ratio": 0.2,
+      "date": "2025-10-17",
+      "note": "combined=-0.665 [Strong] | ind=-0.877 | trend=-1.000 | pat=+0.429 | trend_dir=Uptrend | pattern=Hammer + 1 more (43% conf)"
+    },
+    {
+      "decision_idx": 140,
+      "direction": 1,
+      "confidence": 0.1536,
+      "risk_reward_ratio": 1.57,
+      "date": "2025-10-24",
+      "note": "combined=+0.154 [Weak] | ind=-0.155 | trend=+0.432 | pat=+0.214 | trend_dir=Uptrend | pattern=Engulfing (21% conf)"
+    },
+    {
+      "decision_idx": 147,
+      "direction": 0,
+      "confidence": 0.066,
+      "risk_reward_ratio": 1.73,
+      "date": "2025-10-31",
+      "note": "combined=+0.066 [Weak] | ind=-0.173 | trend=+0.338 | pat=+0.000 | trend_dir=Downtrend | pattern=None (0% conf)"
+    },
+    {
+      "decision_idx": 154,
+      "direction": 0,
+      "confidence": 0.132,
+      "risk_reward_ratio": 0.52,
+      "date": "2025-11-07",
+      "note": "combined=-0.132 [Weak] | ind=-0.767 | trend=+0.544 | pat=-0.214 | trend_dir=Downtrend | pattern=Engulfing (21% conf)"
+    },
+    {
+      "decision_idx": 161,
+      "direction": -1,
+      "confidence": 0.8786,
+      "risk_reward_ratio": 0.03,
+      "date": "2025-11-14",
+      "note": "combined=-0.879 [Strong] | ind=-0.875 | trend=-1.000 | pat=-0.643 | trend_dir=Downtrend | pattern=Engulfing + 2 more (64% conf)"
+    },
+    {
+      "decision_idx": 168,
+      "direction": -1,
+      "confidence": 0.7876,
+      "risk_reward_ratio": 0.06,
+      "date": "2025-11-21",
+      "note": "combined=-0.788 [Strong] | ind=-0.969 | trend=-1.000 | pat=+0.000 | trend_dir=Downtrend | pattern=None (0% conf)"
+    },
+    {
+      "decision_idx": 175,
+      "direction": 0,
+      "confidence": 0.0308,
+      "risk_reward_ratio": 1.36,
+      "date": "2025-11-28",
+      "note": "combined=-0.031 [Weak] | ind=+0.144 | trend=-0.328 | pat=+0.214 | trend_dir=Downtrend | pattern=Doji (21% conf)"
+    },
+    {
+      "decision_idx": 182,
+      "direction": 0,
+      "confidence": 0.0688,
+      "risk_reward_ratio": 1.73,
+      "date": "2025-12-05",
+      "note": "combined=-0.069 [Weak] | ind=+0.411 | trend=-0.476 | pat=-0.214 | trend_dir=Downtrend | pattern=Harami (21% conf)"
+    },
+    {
+      "decision_idx": 189,
+      "direction": -1,
+      "confidence": 0.1568,
+      "risk_reward_ratio": 4.0,
+      "date": "2025-12-12",
+      "note": "combined=-0.157 [Weak] | ind=+0.271 | trend=-0.663 | pat=+0.000 | trend_dir=Downtrend | pattern=Engulfing + 1 more (0% conf)"
+    },
+    {
+      "decision_idx": 196,
+      "direction": -1,
+      "confidence": 0.4992,
+      "risk_reward_ratio": 1.99,
+      "date": "2025-12-19",
+      "note": "combined=-0.499 [Moderate] | ind=-0.457 | trend=-0.684 | pat=-0.214 | trend_dir=Downtrend | pattern=Engulfing (21% conf)"
+    },
+    {
+      "decision_idx": 203,
+      "direction": -1,
+      "confidence": 0.224,
+      "risk_reward_ratio": 4.0,
+      "date": "2025-12-26",
+      "note": "combined=-0.224 [Weak] | ind=-0.100 | trend=-0.567 | pat=+0.214 | trend_dir=Downtrend | pattern=Doji (21% conf)"
+    },
+    {
+      "decision_idx": 210,
+      "direction": 0,
+      "confidence": 0.0166,
+      "risk_reward_ratio": 0.7,
+      "date": "2026-01-02",
+      "note": "combined=+0.017 [Weak] | ind=+0.623 | trend=-0.796 | pat=+0.429 | trend_dir=Downtrend | pattern=Engulfing + 1 more (43% conf)"
+    },
+    {
+      "decision_idx": 217,
+      "direction": 0,
+      "confidence": 0.0252,
+      "risk_reward_ratio": 2.15,
+      "date": "2026-01-09",
+      "note": "combined=-0.025 [Weak] | ind=+0.282 | trend=-0.452 | pat=+0.214 | trend_dir=Downtrend | pattern=Hammer + 2 more (21% conf)"
+    },
+    {
+      "decision_idx": 224,
+      "direction": 0,
+      "confidence": 0.057,
+      "risk_reward_ratio": 0.22,
+      "date": "2026-01-16",
+      "note": "combined=+0.057 [Weak] | ind=+0.727 | trend=-0.799 | pat=+0.429 | trend_dir=Uptrend | pattern=Hammer + 1 more (43% conf)"
+    },
+    {
+      "decision_idx": 231,
+      "direction": 0,
+      "confidence": 0.0458,
+      "risk_reward_ratio": 0.65,
+      "date": "2026-01-23",
+      "note": "combined=-0.046 [Weak] | ind=-0.803 | trend=+0.474 | pat=+0.429 | trend_dir=Uptrend | pattern=Harami + 1 more (43% conf)"
+    },
+    {
+      "decision_idx": 238,
+      "direction": -1,
+      "confidence": 0.6852,
+      "risk_reward_ratio": 0.07,
+      "date": "2026-01-30",
+      "note": "combined=-0.685 [Strong] | ind=-0.820 | trend=-1.000 | pat=+0.214 | trend_dir=Uptrend | pattern=Doji (21% conf)"
+    },
+    {
+      "decision_idx": 245,
+      "direction": -1,
+      "confidence": 0.7252,
+      "risk_reward_ratio": 0.19,
+      "date": "2026-02-06",
+      "note": "combined=-0.725 [Strong] | ind=-0.813 | trend=-1.000 | pat=+0.000 | trend_dir=Downtrend | pattern=Engulfing + 1 more (0% conf)"
+    },
+    {
+      "decision_idx": 252,
+      "direction": 0,
+      "confidence": 0.0566,
+      "risk_reward_ratio": 1.92,
+      "date": "2026-02-13",
+      "note": "combined=+0.057 [Weak] | ind=-0.620 | trend=+0.547 | pat=+0.429 | trend_dir=Downtrend | pattern=Engulfing + 1 more (43% conf)"
+    },
+    {
+      "decision_idx": 259,
+      "direction": 0,
+      "confidence": 0.054,
+      "risk_reward_ratio": 2.35,
+      "date": "2026-02-20",
+      "note": "combined=+0.054 [Weak] | ind=-0.076 | trend=+0.104 | pat=+0.214 | trend_dir=Downtrend | pattern=Doji (21% conf)"
+    },
+    {
+      "decision_idx": 266,
+      "direction": 0,
+      "confidence": 0.1044,
+      "risk_reward_ratio": 2.39,
+      "date": "2026-02-27",
+      "note": "combined=-0.104 [Weak] | ind=-0.070 | trend=-0.298 | pat=+0.214 | trend_dir=Downtrend | pattern=Engulfing + 2 more (21% conf)"
+    },
+    {
+      "decision_idx": 273,
+      "direction": -1,
+      "confidence": 0.1516,
+      "risk_reward_ratio": 4.0,
+      "date": "2026-03-06",
+      "note": "combined=-0.152 [Weak] | ind=+0.392 | trend=-0.878 | pat=+0.214 | trend_dir=Downtrend | pattern=Engulfing (21% conf)"
+    },
+    {
+      "decision_idx": 280,
+      "direction": 0,
+      "confidence": 0.1144,
+      "risk_reward_ratio": 3.24,
+      "date": "2026-03-13",
+      "note": "combined=-0.114 [Weak] | ind=+0.607 | trend=-1.000 | pat=+0.214 | trend_dir=Downtrend | pattern=Engulfing + 2 more (21% conf)"
+    },
+    {
+      "decision_idx": 287,
+      "direction": -1,
+      "confidence": 0.2268,
+      "risk_reward_ratio": 4.0,
+      "date": "2026-03-20",
+      "note": "combined=-0.227 [Weak] | ind=+0.163 | trend=-0.623 | pat=-0.214 | trend_dir=Downtrend | pattern=Harami (21% conf)"
+    },
+    {
+      "decision_idx": 294,
+      "direction": -1,
+      "confidence": 0.2752,
+      "risk_reward_ratio": 4.0,
+      "date": "2026-03-27",
+      "note": "combined=-0.275 [Moderate] | ind=-0.755 | trend=+0.067 | pat=+0.000 | trend_dir=Downtrend | pattern=Engulfing + 1 more (0% conf)"
+    },
+    {
+      "decision_idx": 301,
+      "direction": 0,
+      "confidence": 0.038,
+      "risk_reward_ratio": 0.64,
+      "date": "2026-04-03",
+      "note": "combined=-0.038 [Weak] | ind=-0.561 | trend=+0.466 | pat=+0.000 | trend_dir=Uptrend | pattern=Harami + 1 more (0% conf)"
+    },
+    {
+      "decision_idx": 308,
+      "direction": 0,
+      "confidence": 0.1434,
+      "risk_reward_ratio": 0.32,
+      "date": "2026-04-10",
+      "note": "combined=+0.143 [Weak] | ind=+0.822 | trend=-0.678 | pat=+0.429 | trend_dir=Uptrend | pattern=Engulfing + 1 more (43% conf)"
+    },
+    {
+      "decision_idx": 315,
+      "direction": 1,
+      "confidence": 0.6988,
+      "risk_reward_ratio": 0.02,
+      "date": "2026-04-17",
+      "note": "combined=+0.699 [Strong] | ind=+0.854 | trend=+1.000 | pat=-0.214 | trend_dir=Uptrend | pattern=Harami (21% conf)"
+    },
+    {
+      "decision_idx": 322,
+      "direction": 0,
+      "confidence": 0.143,
+      "risk_reward_ratio": 0.5,
+      "date": "2026-04-24",
+      "note": "combined=+0.143 [Weak] | ind=+0.694 | trend=-0.551 | pat=+0.429 | trend_dir=Uptrend | pattern=Engulfing + 1 more (43% conf)"
+    },
+    {
+      "decision_idx": 329,
+      "direction": 0,
+      "confidence": 0.08,
+      "risk_reward_ratio": 1.76,
+      "date": "2026-05-01",
+      "note": "combined=-0.080 [Weak] | ind=+0.268 | trend=-0.361 | pat=-0.214 | trend_dir=Uptrend | pattern=Engulfing (21% conf)"
+    },
+    {
+      "decision_idx": 336,
+      "direction": 0,
+      "confidence": 0.0474,
+      "risk_reward_ratio": 1.07,
+      "date": "2026-05-08",
+      "note": "combined=+0.047 [Weak] | ind=+0.579 | trend=-0.246 | pat=-0.429 | trend_dir=Uptrend | pattern=Engulfing + 3 more (43% conf)"
+    },
+    {
+      "decision_idx": 343,
+      "direction": 0,
+      "confidence": 0.1204,
+      "risk_reward_ratio": 1.73,
+      "date": "2026-05-15",
+      "note": "combined=+0.120 [Weak] | ind=-0.483 | trend=+0.677 | pat=+0.214 | trend_dir=Uptrend | pattern=Engulfing (21% conf)"
+    },
+    {
+      "decision_idx": 350,
+      "direction": -1,
+      "confidence": 0.6538,
+      "risk_reward_ratio": 0.37,
+      "date": "2026-05-22",
+      "note": "combined=-0.654 [Strong] | ind=-0.849 | trend=-1.000 | pat=+0.429 | trend_dir=Uptrend | pattern=Engulfing + 1 more (43% conf)"
+    },
+    {
+      "decision_idx": 357,
+      "direction": -1,
+      "confidence": 0.6988,
+      "risk_reward_ratio": 0.21,
+      "date": "2026-05-29",
+      "note": "combined=-0.699 [Strong] | ind=-0.854 | trend=-1.000 | pat=+0.214 | trend_dir=Uptrend | pattern=Engulfing + 2 more (21% conf)"
+    },
+    {
+      "decision_idx": 364,
+      "direction": -1,
+      "confidence": 0.7568,
+      "risk_reward_ratio": 1.03,
+      "date": "2026-06-05",
+      "note": "combined=-0.757 [Strong] | ind=-0.999 | trend=-1.000 | pat=+0.214 | trend_dir=Downtrend | pattern=Doji (21% conf)"
+    }
+  ]
+}

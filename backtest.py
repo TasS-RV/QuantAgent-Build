@@ -45,12 +45,14 @@ from backtest_engine import Signal, SimConfig, simulate, run_with_baselines, tra
 
 
 SYMBOLS: list[str] = [
-    "NVDA", 
+    "GOOGL",   # Technology  — Alphabet; ad-driven + AI, secular growth cycle
+    "XOM",     # Energy      — ExxonMobil; oil/gas commodity cycle, geopolitical
+    "JNJ",     # Healthcare  — Johnson & Johnson; defensive, patent-driven, low correlation
 ]
 
 # Rolling context window: bars of OHLC history fed to agents at each decision point.
 # e.g. 60 daily bars ≈ 3 months of context per decision.
-WINDOW_BARS: int = 30
+WINDOW_BARS: int = 60
 
 # ── Date range ────────────────────────────────────────────────────────────────
 # START_DATE : first eligible decision date (YYYY-MM-DD).
@@ -67,7 +69,7 @@ WINDOW_BARS: int = 30
 #   END_DATE    = "2025-02-01"
 #   WINDOW_BARS = 21          # ~1 trading month
 #   → data fetched from ~2024-10-01 to 2025-02-01
-START_DATE: str | None = None   # e.g. "2024-12-01"
+START_DATE: str | None = "2015-01-01"
 END_DATE:   str | None = None   # e.g. "2025-02-01"
 
 # Fallback when START_DATE is None: how far back from END_DATE to fetch data.
@@ -80,7 +82,7 @@ LOOKBACK_PERIOD: str = "6mo"
 #   "W-FRI" = weekly, on Friday close  (default)
 #   "2W"    = bi-weekly
 #   "M"     = monthly
-CADENCE: str = "W-Fri"
+CADENCE: str = "D"
 
 # ── Out-of-sample split ───────────────────────────────────────────────────────
 # Set to a YYYY-MM-DD string to get separate in-sample / out-of-sample metrics.
@@ -100,6 +102,248 @@ DEFAULT_LLM_PROVIDER: str = "google"
 GEMINI_KEY_FILE = Path(__file__).resolve().parent.parent / "Gemini_API.txt"
 DEFAULT_GEMINI_AGENT_MODEL: str = "gemini-3.1-flash-lite"
 DEFAULT_GEMINI_GRAPH_MODEL: str = "gemini-3.1-flash-lite"
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  EXPERIMENT CONFIGURATIONS
+# ─────────────────────────────────────────────────────────────────────────────
+#
+#  Six named tuning runs across GOOGL / XOM / JNJ (2015 → today, daily).
+#  Select one at runtime:
+#
+#      python backtest.py --run-config 1_baseline
+#      python backtest.py --run-config 2_trend_heavy
+#      ... etc.
+#
+#  Weights + thresholds are applied automatically.
+#  Parameters tagged with "SOURCE FILE CHANGES" must be manually edited in the
+#  indicated file BEFORE running that config, then reverted afterwards.
+#  Record results in docs/ALGO_TUNING_PLAN.md after each run.
+# ─────────────────────────────────────────────────────────────────────────────
+
+EXPERIMENT_CONFIGS: dict = {
+
+    # ── 1 · Baseline ─────────────────────────────────────────────────────────
+    # All defaults unchanged. This is the control — record its metrics first.
+    # SOURCE FILE CHANGES: none.
+    "1_baseline": {
+        "description":    "Default settings — control run",
+        "weights":        {"indicator": 0.40, "trend": 0.40, "pattern": 0.20},
+        "thresholds":     {"buy": 0.15,  "sell": -0.15,  "short": -0.35},
+        "source_changes": [],
+    },
+
+    # ── 2 · Trend-heavy ──────────────────────────────────────────────────────
+    # Shift weight toward trend. Hypothesis: XOM and GOOGL have clean trends
+    # where regression-channel positioning is more informative than oscillators.
+    # SOURCE FILE CHANGES: none.
+    "2_trend_heavy": {
+        "description":    "Trend weight 0.60 (reduced indicator to 0.20)",
+        "weights":        {"indicator": 0.20, "trend": 0.60, "pattern": 0.20},
+        "thresholds":     {"buy": 0.15,  "sell": -0.15,  "short": -0.35},
+        "source_changes": [],
+    },
+
+    # ── 3 · Trend-continuation ───────────────────────────────────────────────
+    # Flip the trend signal from mean-reversion to trend-continuation logic.
+    # Current (mean-reversion): price at support → bullish.
+    # New (continuation):       price above channel midline → bullish.
+    #
+    # SOURCE FILE CHANGES:
+    #   trend_agent.py → quantify_trend_strength():
+    #     CHANGE: normalized_signal = 1.0 - (position * 2.0)
+    #     TO:     normalized_signal = (position - 0.5) * 2.0
+    "3_trend_continuation": {
+        "description":    "Trend-continuation signal formula (price above mid = bullish)",
+        "weights":        {"indicator": 0.40, "trend": 0.40, "pattern": 0.20},
+        "thresholds":     {"buy": 0.15,  "sell": -0.15,  "short": -0.35},
+        "source_changes": [
+            "trend_agent.py → quantify_trend_strength: "
+            "normalized_signal = (position - 0.5) * 2.0",
+        ],
+    },
+
+    # ── 4 · Aggressive (fast + tight) ────────────────────────────────────────
+    # Shorter indicator lookbacks + tight decision thresholds.
+    # Generates more trades — tests whether extra signals are noise or alpha.
+    #
+    # SOURCE FILE CHANGES:
+    #   indicator_agent.py → _compute_indicator_series:
+    #     RSI       timeperiod:   14 → 7
+    #     ROC       timeperiod:   10 → 5
+    #     MACD      fastperiod:   12 → 8
+    #     MACD      slowperiod:   26 → 20
+    #     MACD      signalperiod:  9 → 6
+    #   indicator_agent.py → _normalize_indicator_signals:
+    #     oscillator scale (RSI/Stoch/WillR divisor):  30 → 20
+    "4_aggressive": {
+        "description":    "Fast indicators (RSI=7, ROC=5, MACD 8/20/6) + tight thresholds (±0.05)",
+        "weights":        {"indicator": 0.40, "trend": 0.40, "pattern": 0.20},
+        "thresholds":     {"buy": 0.05,  "sell": -0.05,  "short": -0.20},
+        "source_changes": [
+            "indicator_agent.py: RSI 14→7, ROC 10→5, MACD 12/26/9→8/20/6",
+            "indicator_agent.py: oscillator scale 30→20",
+        ],
+    },
+
+    # ── 5 · Conservative (slow + wide) ───────────────────────────────────────
+    # Wider thresholds + looser channel bands = fewer, higher-conviction trades.
+    # Tests whether reducing trade frequency improves win rate and Sharpe.
+    #
+    # SOURCE FILE CHANGES:
+    #   indicator_agent.py → _normalize_indicator_signals:
+    #     oscillator scale (RSI/Stoch/WillR divisor):  30 → 40
+    #   trend_agent.py → quantify_trend_strength():
+    #     channel multiplier (std_dev multiplier):  2 → 2.5
+    "5_conservative": {
+        "description":    "Wide thresholds (±0.25) + wider trend channel (2.5× std)",
+        "weights":        {"indicator": 0.40, "trend": 0.40, "pattern": 0.20},
+        "thresholds":     {"buy": 0.25,  "sell": -0.25,  "short": -0.50},
+        "source_changes": [
+            "indicator_agent.py: oscillator scale 30→40",
+            "trend_agent.py: channel multiplier 2→2.5",
+        ],
+    },
+
+    # ── 6 · Indicator-only (no pattern) ──────────────────────────────────────
+    # Zero out the CDL pattern weight. Tests whether TA-Lib micro-reversals
+    # are contributing signal or just adding noise to indicator + trend.
+    # SOURCE FILE CHANGES: none.
+    "6_indicator_only": {
+        "description":    "Pattern weight = 0 (indicator 0.55 / trend 0.45)",
+        "weights":        {"indicator": 0.55, "trend": 0.45, "pattern": 0.00},
+        "thresholds":     {"buy": 0.15,  "sell": -0.15,  "short": -0.35},
+        "source_changes": [],
+    },
+
+    # ══════════════════════════════════════════════════════════════════════════
+    #  PURE-WEIGHT BASELINES  (configs 7 – 9)
+    #  One agent drives 100% of the signal. These isolate exactly how much
+    #  each component contributes when it has to stand alone. Compare all
+    #  three against each other and against config 1 to calibrate final blends.
+    # ══════════════════════════════════════════════════════════════════════════
+
+    # ── 7 · Pure Indicator ───────────────────────────────────────────────────
+    # SOURCE FILE CHANGES: none.
+    "7_pure_indicator": {
+        "description":    "Weight sweep — indicator only (1.00 / 0.00 / 0.00)",
+        "weights":        {"indicator": 1.00, "trend": 0.00, "pattern": 0.00},
+        "thresholds":     {"buy": 0.15,  "sell": -0.15,  "short": -0.35},
+        "source_changes": [],
+    },
+
+    # ── 8 · Pure Trend ───────────────────────────────────────────────────────
+    # SOURCE FILE CHANGES: none.
+    "8_pure_trend": {
+        "description":    "Weight sweep — trend only (0.00 / 1.00 / 0.00)",
+        "weights":        {"indicator": 0.00, "trend": 1.00, "pattern": 0.00},
+        "thresholds":     {"buy": 0.15,  "sell": -0.15,  "short": -0.35},
+        "source_changes": [],
+    },
+
+    # ── 9 · Pure Pattern ─────────────────────────────────────────────────────
+    # SOURCE FILE CHANGES: none.
+    "9_pure_pattern": {
+        "description":    "Weight sweep — CDL pattern only (0.00 / 0.00 / 1.00)",
+        "weights":        {"indicator": 0.00, "trend": 0.00, "pattern": 1.00},
+        "thresholds":     {"buy": 0.15,  "sell": -0.15,  "short": -0.35},
+        "source_changes": [],
+    },
+
+    # ══════════════════════════════════════════════════════════════════════════
+    #  TRADING-STYLE CONFIGS  (configs 10 – 12)
+    #  Each one maps a real-world trading style onto the quantitative parameters.
+    # ══════════════════════════════════════════════════════════════════════════
+
+    # ── 10 · Swing Momentum ──────────────────────────────────────────────────
+    # Approximates a short-term swing trader working on compressed daily bars
+    # (equivalent mindset to an hourly chart — use --window-bars 20 so the
+    # regression and indicators only see ~1 month of context at a time).
+    #
+    # Design:
+    #   • 20-bar window  → regression line reacts to 4-week swings, not quarters
+    #   • Fast indicators (RSI=7, ROC=5) → catch momentum bursts quickly
+    #   • Trend-continuation formula    → ride the move, don't fade it
+    #   • Tight thresholds (±0.10)      → enter on smaller combined signals
+    #   • Trend-heavy weights           → momentum direction > oscillator state
+    #
+    # SOURCE FILE CHANGES:
+    #   indicator_agent.py → _compute_indicator_series:
+    #     RSI timeperiod: 14 → 7
+    #     ROC timeperiod: 10 → 5
+    #     MACD fastperiod/slowperiod/signalperiod: 12/26/9 → 8/20/6
+    #   indicator_agent.py → _normalize_indicator_signals:
+    #     oscillator scale (divisor): 30 → 20
+    #   trend_agent.py → quantify_trend_strength:
+    #     normalized_signal = (position - 0.5) * 2.0   [continuation]
+    "10_swing_momentum": {
+        "description":    "Swing trader — 20-bar window, fast indicators, trend-continuation",
+        "weights":        {"indicator": 0.35, "trend": 0.50, "pattern": 0.15},
+        "thresholds":     {"buy": 0.10,  "sell": -0.10,  "short": -0.25},
+        "window_bars":    20,
+        "source_changes": [
+            "indicator_agent.py: RSI 14→7, ROC 10→5, MACD 12/26/9→8/20/6, scale 30→20",
+            "trend_agent.py: normalized_signal = (position - 0.5) * 2.0",
+            "window_bars=20 applied automatically from this config",
+        ],
+    },
+
+    # ── 11 · Support & Resistance Bands ──────────────────────────────────────
+    # Models a trader who enters at tested S/R levels with trend confirmation.
+    #
+    # Design:
+    #   • Tight channel (1.5× std)      → narrower bands = more precise S/R touch
+    #     (price pierces the band more often, generating more edge-of-channel signals)
+    #   • Strong slope amplification (1.5×) → only amplifies when trend direction
+    #     agrees with channel position, filtering out counter-trend touches
+    #   • Mean-reversion formula stays  → price AT support = bullish (the S/R logic)
+    #   • Trend-heavy (0.60)            → channel position dominates signal
+    #   • Slightly tighter thresholds   → respond to genuine band touches
+    #
+    # SOURCE FILE CHANGES:
+    #   trend_agent.py → quantify_trend_strength():
+    #     channel multiplier:  2   → 1.5
+    #     slope amplification: 1.2 → 1.5
+    "11_sr_bands": {
+        "description":    "S/R bands — tight channel (1.5×std), strong slope boost (1.5×)",
+        "weights":        {"indicator": 0.20, "trend": 0.60, "pattern": 0.20},
+        "thresholds":     {"buy": 0.12,  "sell": -0.12,  "short": -0.30},
+        "source_changes": [
+            "trend_agent.py: channel multiplier 2→1.5",
+            "trend_agent.py: slope amplification 1.2→1.5",
+        ],
+    },
+
+    # ── 12 · Reversal Hunter ─────────────────────────────────────────────────
+    # High-conviction reversal setup: pattern fires on the current candle only,
+    # backed by an oversold/overbought indicator reading.
+    #
+    # Design:
+    #   • lookback=1   → CDL pattern must fire on TODAY's candle (no look-behind)
+    #   • Remove Doji + Harami from _CDL_PATTERNS (low-edge noise patterns)
+    #     Keeps: Engulfing, Hammer, InvertedHammer, MorningStar, EveningStar,
+    #            ThreeWhiteSoldiers, ThreeBlackCrows, ShootingStar,
+    #            DarkCloudCover, Piercing, Marubozu, AbandonedBaby
+    #   • Pattern-heavy (0.50)      → reversal candle is the primary signal
+    #   • Indicator supports (0.30) → RSI/Stoch confirm overbought/oversold
+    #   • Trend de-weighted (0.20)  → reversals occur AT trend extremes
+    #   • Wider thresholds (±0.18)  → require meaningful pattern + indicator
+    #                                 agreement before triggering
+    #
+    # SOURCE FILE CHANGES:
+    #   quant_pipeline/quant_nodes.py → _CDL_PATTERNS list:
+    #     Remove: ("Doji", ...) and ("Harami", ...) entries
+    #   quant_pipeline/quant_nodes.py → quantify_candlestick_patterns():
+    #     default lookback: 5 → 1
+    "12_reversal_hunter": {
+        "description":    "Reversal hunter — pattern 0.50, high-reliability CDL only, lookback=1",
+        "weights":        {"indicator": 0.30, "trend": 0.20, "pattern": 0.50},
+        "thresholds":     {"buy": 0.18,  "sell": -0.18,  "short": -0.40},
+        "source_changes": [
+            "quant_pipeline/quant_nodes.py: remove Doji + Harami from _CDL_PATTERNS",
+            "quant_pipeline/quant_nodes.py: quantify_candlestick_patterns lookback 5→1",
+        ],
+    },
+}
 
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -700,6 +944,17 @@ def main():
     # ── What to test ──────────────────────────────────────────────────────────
     p.add_argument("--symbols", nargs="+", default=SYMBOLS,
                    help="Tickers to backtest")
+    p.add_argument(
+        "--run-config",
+        default=None,
+        dest="run_config",
+        choices=list(EXPERIMENT_CONFIGS.keys()),
+        metavar="NAME",
+        help=(
+            "Select a predefined experiment config (overrides quant weights + "
+            "thresholds). Available: " + ", ".join(EXPERIMENT_CONFIGS.keys())
+        ),
+    )
 
     # ── Date range ────────────────────────────────────────────────────────────
     p.add_argument(
@@ -819,13 +1074,37 @@ def main():
         provider = args.provider
         print(f"  LLM mode    : {provider}  ({DEFAULT_GEMINI_AGENT_MODEL if provider == 'google' else 'default model'})")
 
+    # ── Experiment config ─────────────────────────────────────────────────────
+    quant_weights      = None
+    quant_thresholds   = None
+    effective_window   = args.window_bars   # may be overridden by config below
+    if args.run_config:
+        ecfg             = EXPERIMENT_CONFIGS[args.run_config]
+        quant_weights    = ecfg["weights"]
+        quant_thresholds = ecfg["thresholds"]
+        if ecfg.get("window_bars"):
+            effective_window = ecfg["window_bars"]
+        print(f"\n  Experiment  : [{args.run_config}]  {ecfg['description']}")
+        w = ecfg["weights"]
+        print(f"  Weights     : indicator={w['indicator']:.2f}  "
+              f"trend={w['trend']:.2f}  pattern={w['pattern']:.2f}")
+        t = ecfg["thresholds"]
+        print(f"  Thresholds  : buy={t['buy']}  sell={t['sell']}  short={t['short']}")
+        if ecfg.get("window_bars"):
+            print(f"  Window bars : {effective_window}  (config override, default is {args.window_bars})")
+        if ecfg.get("source_changes"):
+            print("  [!] Manual source file changes required for this config:")
+            for change in ecfg["source_changes"]:
+                print(f"      •  {change}")
+        print()
+
     asyncio.run(backtest_universe(
         symbols=args.symbols,
         start_date=args.start,
         end_date=args.end,
         period=args.period,
         cadence=args.cadence,
-        window_bars=args.window_bars,
+        window_bars=effective_window,
         concurrency=args.concurrency,
         out_dir=args.out,
         cfg=cfg,
@@ -833,6 +1112,8 @@ def main():
         use_llm=use_llm,
         no_charts=args.no_charts,
         llm_config=llm_config,
+        quant_weights=quant_weights,
+        quant_thresholds=quant_thresholds,
     ))
 
 

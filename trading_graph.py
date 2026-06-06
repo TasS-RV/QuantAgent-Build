@@ -253,14 +253,23 @@ class TradingGraph:
         Create an LLM instance based on the provider.
         """
         # Force lowercase to prevent "Google" vs "google" capitalization crashes
-        provider = provider.lower() 
+        provider = provider.lower()
         api_key = self._get_api_key(provider)
+
+        # Attach the API cost stop-loss to every LLM: each invoke is preflighted
+        # (aborted before spend if a cap is hit) and its token usage recorded.
+        try:
+            from cost_guard import make_langchain_callback
+            cbs = [make_langchain_callback()]
+        except Exception:
+            cbs = None
 
         if provider == "openai":
             return ChatOpenAI(
                 model=model,
                 temperature=temperature,
                 api_key=api_key,
+                callbacks=cbs,
             )
         elif provider == "anthropic":
             # ChatAnthropic handles SystemMessage extraction automatically
@@ -268,6 +277,7 @@ class TradingGraph:
                 model=model,
                 temperature=temperature,
                 api_key=api_key,
+                callbacks=cbs,
             )
         elif provider == "qwen":
             return ChatQwen(
@@ -275,6 +285,7 @@ class TradingGraph:
                 temperature=temperature,
                 api_key=api_key,
                 max_retries=4,
+                callbacks=cbs,
             )
         elif provider in MINIMAX_PROVIDER_CONFIG:
             # MiniMax uses OpenAI-compatible APIs
@@ -284,6 +295,7 @@ class TradingGraph:
                 temperature=clamped_temp,
                 api_key=api_key,
                 openai_api_base=MINIMAX_PROVIDER_CONFIG[provider]["base_url"],
+                callbacks=cbs,
             )
         elif provider == "google":
             return ChatGoogleGenerativeAI(
@@ -291,6 +303,7 @@ class TradingGraph:
                 temperature=temperature,
                 google_api_key=api_key,
                 max_retries=4,
+                callbacks=cbs,
             )
         elif provider == "featherless":
             return ChatOpenAI(
@@ -299,6 +312,7 @@ class TradingGraph:
                 api_key=api_key,
                 openai_api_base="https://api.featherless.ai/v1",
                 max_retries=4,
+                callbacks=cbs,
             )
         else:
             raise ValueError(f"Unsupported provider: {provider}. Must be one of {', '.join(SUPPORTED_PROVIDERS)}")

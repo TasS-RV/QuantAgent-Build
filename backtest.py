@@ -925,11 +925,29 @@ async def backtest_universe(
         except Exception as e:
             print(f"[WARN] Chart generation failed: {e}")
 
+    # ── LLM cost report (cost-in-P&L) ────────────────────────────────────────
+    from cost_guard import get_guard
+    cost = get_guard().summary()
+    notional = 10_000.0
+    drag_pct = (cost["cost_usd"] / notional) * 100.0
+    print("\n" + "=" * 60)
+    print("  LLM COST REPORT (stop-loss accounting)")
+    print("=" * 60)
+    print(f"  Calls         : {cost['calls']}")
+    print(f"  Tokens        : {cost['total_tokens']:,} "
+          f"(in {cost['input_tokens']:,} / out {cost['output_tokens']:,})")
+    print(f"  Spend         : ${cost['cost_usd']:.4f}  of cap ${cost['max_usd']}")
+    print(f"  Cost drag     : {drag_pct:.3f}%  (at ${notional:,.0f} notional)")
+    if cost["calls"] == 0:
+        print("  (no LLM calls — deterministic / --no-llm run, zero credit spend)")
+    (out_dir / "cost_report.json").write_text(json.dumps(cost, indent=2))
+
     return {
         "summary":   summary_df,
         "baselines": baseline_df,
         "signals":   all_signals,
         "histories": histories,
+        "cost":      cost,
     }
 
 
@@ -1022,6 +1040,14 @@ def main():
     p.add_argument("--concurrency", type=int, default=4,
                    help="(LLM mode only) parallel API calls per symbol")
 
+    # ── API cost stop-loss (only relevant in LLM mode) ──────────────────────────
+    p.add_argument("--max-usd", type=float, default=None,
+                   help="Hard $ cap on LLM spend for this run (overrides QUANT_MAX_USD)")
+    p.add_argument("--max-tokens", type=int, default=None,
+                   help="Hard total-token cap (overrides QUANT_MAX_TOKENS)")
+    p.add_argument("--max-calls", type=int, default=None,
+                   help="Hard LLM-call-count cap (overrides QUANT_MAX_CALLS)")
+
     llm_group = p.add_mutually_exclusive_group()
     llm_group.add_argument(
         "--no-llm", action="store_true",
@@ -1073,6 +1099,11 @@ def main():
     if use_llm:
         provider = args.provider
         print(f"  LLM mode    : {provider}  ({DEFAULT_GEMINI_AGENT_MODEL if provider == 'google' else 'default model'})")
+        # Arm the API cost stop-loss before any LLM call can happen.
+        from cost_guard import configure as _configure_guard
+        guard = _configure_guard(max_usd=args.max_usd, max_tokens=args.max_tokens,
+                                 max_calls=args.max_calls)
+        print(f"  {guard.banner()}")
 
     # ── Experiment config ─────────────────────────────────────────────────────
     quant_weights      = None

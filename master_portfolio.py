@@ -430,6 +430,10 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--no-short",  action="store_true", help="Disable SHORT signals (long-only)")
     p.add_argument("--rr-target", type=float,   default=None, help="Risk:reward target ratio")
     p.add_argument("--atr-mult",  type=float,   default=None, help="ATR multiplier for stop-loss")
+    p.add_argument("--max-usd",   type=float,   default=None,
+                   help="API cost stop-loss: hard $ cap on LLM spend (LLM mode)")
+    p.add_argument("--max-calls", type=int,     default=None,
+                   help="API cost stop-loss: hard cap on LLM call count (LLM mode)")
     p.add_argument("--output",    default=None, help="Save JSON results to this file path")
     p.add_argument(
         "--breakdown",
@@ -506,6 +510,11 @@ def main() -> List[dict]:
             allow_short        = dec_cfg["allow_short"],
         )
     else:
+        # Arm the API cost stop-loss before any LLM call can happen.
+        from cost_guard import configure as _configure_guard
+        _guard = _configure_guard(max_usd=getattr(args, "max_usd", None),
+                                  max_calls=getattr(args, "max_calls", None))
+        print(f"  {_guard.banner()}")
         from trading_graph import TradingGraph
         trading_graph = TradingGraph(config=llm_config)
         trading_graph.ensure_initialized()

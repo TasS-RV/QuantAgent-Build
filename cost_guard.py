@@ -67,6 +67,31 @@ def _price_for(model: Optional[str], pricing: dict):
     return best[1] if best else _DEFAULT_PRICE
 
 
+# Optional integration with the `tokencost` library (AgentOps-AI): a maintained,
+# offline price map for 400+ models. Used when installed; we silently fall back
+# to the built-in table for unknown models or if the package is absent.
+_TOKENCOST_OK: Optional[bool] = None
+
+
+def _tokencost_estimate(model: str, input_tokens: int, output_tokens: int) -> Optional[float]:
+    global _TOKENCOST_OK
+    if _TOKENCOST_OK is False:
+        return None
+    try:
+        from tokencost import calculate_cost_by_tokens
+    except Exception:
+        _TOKENCOST_OK = False
+        return None
+    try:
+        cin = float(calculate_cost_by_tokens(int(input_tokens), model, "input"))
+        cout = float(calculate_cost_by_tokens(int(output_tokens), model, "output"))
+        _TOKENCOST_OK = True
+        return cin + cout
+    except Exception:
+        # Unknown model in tokencost's map — let caller use the built-in table.
+        return None
+
+
 def _env_float(name: str, default: float) -> float:
     v = os.environ.get(name)
     try:
@@ -95,6 +120,8 @@ class CostGuard:
     kill_switch: bool = False
     pricing: dict = field(default_factory=lambda: dict(DEFAULT_PRICING))
 
+    use_tokencost: bool = True   # prefer the maintained `tokencost` price map if installed
+
     calls: int = 0
     input_tokens: int = 0
     output_tokens: int = 0
@@ -102,6 +129,15 @@ class CostGuard:
     _lock: threading.Lock = field(default_factory=threading.Lock, repr=False)
 
     def estimate_cost(self, model, input_tokens, output_tokens) -> float:
+        # No LLM API returns a dollar cost — every tracker (tokencost, litellm,
+        # langfuse) multiplies returned token usage by a price table, which is
+        # what we do here. Prefer the maintained `tokencost` map (400+ models,
+        # offline) when installed and the model is recognised; else fall back to
+        # the built-in pricing table.
+        if self.use_tokencost and model:
+            tc = _tokencost_estimate(model, input_tokens, output_tokens)
+            if tc is not None:
+                return tc
         cin, cout = _price_for(model, self.pricing)
         return (input_tokens / 1e6) * cin + (output_tokens / 1e6) * cout
 
@@ -283,4 +319,20 @@ def record_agents_sdk_result(result, model=None, guard: Optional[CostGuard] = No
                     out_tok += getattr(u, "output_tokens", 0) or 0
         except Exception:
             pass
+    return g.record(in_tok, out_tok, model)
+
+
+def record_gemini_response(response, model=None, guard: Optional[CostGuard] = None) -> float:
+    """
+    Record usage from a google-genai response (direct Gemini SDK path).
+    Uses response.usage_metadata: prompt_token_count (input) and
+    candidates_token_count + thoughts_token_count (billed output). Returns cost.
+    """
+    g = guard or get_guard()
+    um = getattr(response, "usage_metadata", None)
+    in_tok = out_tok = 0
+    if um is not None:
+        in_tok = getattr(um, "prompt_token_count", 0) or 0
+        out_tok = (getattr(um, "candidates_token_count", 0) or 0) + \
+                  (getattr(um, "thoughts_token_count", 0) or 0)
     return g.record(in_tok, out_tok, model)

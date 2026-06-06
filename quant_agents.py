@@ -14,6 +14,16 @@ from pydantic import BaseModel, Field
 import charts
 import indicators
 from default_config import DEFAULT_CONFIG
+from cost_guard import get_guard, record_agents_sdk_result
+
+
+async def _guarded_run(agent: Agent, agent_input):
+    """Runner.run wrapped by the cost stop-loss: preflight before, record after."""
+    model = getattr(agent, "model", None)
+    get_guard().preflight(model=model)
+    result = await Runner.run(agent, input=agent_input)
+    record_agents_sdk_result(result, model=model)
+    return result
 
 
 # Ensure OPENAI_API_KEY is on the env so the Agents SDK picks it up.
@@ -163,7 +173,7 @@ async def _run_indicator(agent: Agent, indicator_data: dict, symbol: str, timefr
         f"Symbol: {symbol} | Timeframe: {timeframe}\n"
         f"Indicator payload:\n{json.dumps(payload, indent=2)}"
     )
-    result = await Runner.run(agent, input=prompt)
+    result = await _guarded_run(agent, prompt)
     return result.final_output
 
 
@@ -172,7 +182,7 @@ async def _run_pattern(agent: Agent, image_b64: str, symbol: str, timeframe: str
         f"Identify the macro pattern in this {timeframe} candlestick chart of {symbol}. "
         "Return strict JSON in the required schema."
     )
-    result = await Runner.run(agent, input=_image_input(prompt, image_b64))
+    result = await _guarded_run(agent, _image_input(prompt, image_b64))
     return result.final_output
 
 
@@ -181,7 +191,7 @@ async def _run_trend(agent: Agent, image_b64: str, symbol: str, timeframe: str) 
         f"Predict the short-term trend for this {timeframe} {symbol} chart. "
         "Blue line = support, red line = resistance. Return strict JSON."
     )
-    result = await Runner.run(agent, input=_image_input(prompt, image_b64))
+    result = await _guarded_run(agent, _image_input(prompt, image_b64))
     return result.final_output
 
 
@@ -199,7 +209,7 @@ async def _run_decision(
         f"Pattern report:\n{pattern.model_dump_json(indent=2)}\n\n"
         f"Trend report:\n{trend.model_dump_json(indent=2)}"
     )
-    result = await Runner.run(agent, input=prompt)
+    result = await _guarded_run(agent, prompt)
     return result.final_output
 
 

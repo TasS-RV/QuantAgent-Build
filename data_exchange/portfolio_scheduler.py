@@ -260,6 +260,13 @@ def main():
                    help="Blend FinBERT news sentiment into decisions (0 disables; e.g. 0.2)")
     args = p.parse_args()
 
+    # Surface the trading-safety status — recommendations here are advisory only.
+    try:
+        from safety import banner as _safety_banner
+        print(f"  {_safety_banner()}")
+    except Exception:
+        pass
+
     def get_holdings() -> List[Holding]:
         if args.source == "t212":
             return holdings_from_t212(use_mock=False)

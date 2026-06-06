@@ -191,6 +191,21 @@ class Trading212Client:
         resp.raise_for_status()
         return resp.json()
 
+    def place_order(self, ticker: str, quantity: float, **kwargs):
+        """
+        Place a real order. BLOCKED by default — gated by the safety rails.
+
+        Decisions in this project are advisory; live order placement requires
+        PAPER_TRADING off + QUANT_LIVE_TRADING=1 + kill switch off (see safety.py).
+        Until the live execution layer is built this is intentionally a stub that
+        refuses to trade rather than silently no-op.
+        """
+        from safety import require_live_trading
+        require_live_trading(f"place {quantity} {ticker} order")
+        raise NotImplementedError(
+            "Live order execution is not implemented yet (paper/advisory only). "
+            "Implement the T212 order endpoint here once the execution layer is ready.")
+
     @staticmethod
     def _parse_position(p: dict) -> Position:
         ticker = p.get("ticker", "")

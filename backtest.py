@@ -24,11 +24,9 @@ import yfinance as yf
 from tqdm.asyncio import tqdm as atqdm
 from tqdm import tqdm
 
-# LLM-mode dependencies (pandas_ta + OpenAI Agents SDK).
-# Imported lazily so --no-llm works without these installed.
+# Optional: warm up pandas-ta indicator cache at import time.
 try:
-    import indicators as _indicators_mod  # noqa: F401  (warms up pandas-ta)
-    from quant_agents import run_pipeline_async
+    import indicators as _indicators_mod  # noqa: F401
     _LLM_DEPS_AVAILABLE = True
 except ImportError:
     _LLM_DEPS_AVAILABLE = False

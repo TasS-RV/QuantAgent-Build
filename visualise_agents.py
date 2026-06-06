@@ -149,13 +149,13 @@ def run_pattern(
     import talib
     from trading_graph import TradingGraph
     from default_config import DEFAULT_CONFIG
-    import static_util
+    import charts
 
     kline, df = _fetch_kline(symbol, timeframe, period, window, offset=0, need_volume=False)
 
     print("Generating chart images...")
-    p_image = static_util.generate_kline_image(kline)
-    t_image = static_util.generate_trend_image(kline)
+    p_image = charts.generate_kline_image(kline)
+    t_image = charts.generate_trend_image(kline)
 
     initial_state = {
         "kline_data":     kline,

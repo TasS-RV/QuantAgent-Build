@@ -61,14 +61,14 @@ WINDOW_BARS: int = 60
 #              None = today.
 #
 # When START_DATE is set, data is fetched from
-#   (START_DATE − WINDOW_BARS × 2 calendar-day buffer)  →  END_DATE
+#   (START_DATE − WINDOW_BARS × 2 calendar-day buffer)  ->  END_DATE
 # so the rolling-window agents always have full context at the first decision.
 #
 # Example: backtest Dec 2024 – Feb 2025 with a 1-month rolling window:
 #   START_DATE  = "2024-12-01"
 #   END_DATE    = "2025-02-01"
 #   WINDOW_BARS = 21          # ~1 trading month
-#   → data fetched from ~2024-10-01 to 2025-02-01
+#   -> data fetched from ~2024-10-01 to 2025-02-01
 START_DATE: str | None = "2015-01-01"
 END_DATE:   str | None = None   # e.g. "2025-02-01"
 
@@ -92,9 +92,9 @@ OOS_START: str | None = None   # e.g. "2025-01-01"
 # ── LLM Provider (used when NOT running --no-llm) ────────────────────────────
 # Provider for LLM-assisted signal collection via the LangGraph pipeline.
 # Supports the same providers as master_portfolio.py:
-#   "google"    → Gemini (auto-loads key from ../Gemini_API.txt)
-#   "openai"    → OpenAI via LangGraph
-#   "anthropic" → Claude via LangGraph
+#   "google"    -> Gemini (auto-loads key from ../Gemini_API.txt)
+#   "openai"    -> OpenAI via LangGraph
+#   "anthropic" -> Claude via LangGraph
 #
 # Usage: python backtest.py --llm --provider google
 DEFAULT_LLM_PROVIDER: str = "google"
@@ -107,7 +107,7 @@ DEFAULT_GEMINI_GRAPH_MODEL: str = "gemini-3.1-flash-lite"
 #  EXPERIMENT CONFIGURATIONS
 # ─────────────────────────────────────────────────────────────────────────────
 #
-#  Six named tuning runs across GOOGL / XOM / JNJ (2015 → today, daily).
+#  Six named tuning runs across GOOGL / XOM / JNJ (2015 -> today, daily).
 #  Select one at runtime:
 #
 #      python backtest.py --run-config 1_baseline
@@ -145,11 +145,11 @@ EXPERIMENT_CONFIGS: dict = {
 
     # ── 3 · Trend-continuation ───────────────────────────────────────────────
     # Flip the trend signal from mean-reversion to trend-continuation logic.
-    # Current (mean-reversion): price at support → bullish.
-    # New (continuation):       price above channel midline → bullish.
+    # Current (mean-reversion): price at support -> bullish.
+    # New (continuation):       price above channel midline -> bullish.
     #
     # SOURCE FILE CHANGES:
-    #   trend_agent.py → quantify_trend_strength():
+    #   trend_agent.py -> quantify_trend_strength():
     #     CHANGE: normalized_signal = 1.0 - (position * 2.0)
     #     TO:     normalized_signal = (position - 0.5) * 2.0
     "3_trend_continuation": {
@@ -157,7 +157,7 @@ EXPERIMENT_CONFIGS: dict = {
         "weights":        {"indicator": 0.40, "trend": 0.40, "pattern": 0.20},
         "thresholds":     {"buy": 0.15,  "sell": -0.15,  "short": -0.35},
         "source_changes": [
-            "trend_agent.py → quantify_trend_strength: "
+            "trend_agent.py -> quantify_trend_strength: "
             "normalized_signal = (position - 0.5) * 2.0",
         ],
     },
@@ -167,21 +167,21 @@ EXPERIMENT_CONFIGS: dict = {
     # Generates more trades — tests whether extra signals are noise or alpha.
     #
     # SOURCE FILE CHANGES:
-    #   indicator_agent.py → _compute_indicator_series:
-    #     RSI       timeperiod:   14 → 7
-    #     ROC       timeperiod:   10 → 5
-    #     MACD      fastperiod:   12 → 8
-    #     MACD      slowperiod:   26 → 20
-    #     MACD      signalperiod:  9 → 6
-    #   indicator_agent.py → _normalize_indicator_signals:
-    #     oscillator scale (RSI/Stoch/WillR divisor):  30 → 20
+    #   indicator_agent.py -> _compute_indicator_series:
+    #     RSI       timeperiod:   14 -> 7
+    #     ROC       timeperiod:   10 -> 5
+    #     MACD      fastperiod:   12 -> 8
+    #     MACD      slowperiod:   26 -> 20
+    #     MACD      signalperiod:  9 -> 6
+    #   indicator_agent.py -> _normalize_indicator_signals:
+    #     oscillator scale (RSI/Stoch/WillR divisor):  30 -> 20
     "4_aggressive": {
         "description":    "Fast indicators (RSI=7, ROC=5, MACD 8/20/6) + tight thresholds (±0.05)",
         "weights":        {"indicator": 0.40, "trend": 0.40, "pattern": 0.20},
         "thresholds":     {"buy": 0.05,  "sell": -0.05,  "short": -0.20},
         "source_changes": [
-            "indicator_agent.py: RSI 14→7, ROC 10→5, MACD 12/26/9→8/20/6",
-            "indicator_agent.py: oscillator scale 30→20",
+            "indicator_agent.py: RSI 14->7, ROC 10->5, MACD 12/26/9->8/20/6",
+            "indicator_agent.py: oscillator scale 30->20",
         ],
     },
 
@@ -190,17 +190,17 @@ EXPERIMENT_CONFIGS: dict = {
     # Tests whether reducing trade frequency improves win rate and Sharpe.
     #
     # SOURCE FILE CHANGES:
-    #   indicator_agent.py → _normalize_indicator_signals:
-    #     oscillator scale (RSI/Stoch/WillR divisor):  30 → 40
-    #   trend_agent.py → quantify_trend_strength():
-    #     channel multiplier (std_dev multiplier):  2 → 2.5
+    #   indicator_agent.py -> _normalize_indicator_signals:
+    #     oscillator scale (RSI/Stoch/WillR divisor):  30 -> 40
+    #   trend_agent.py -> quantify_trend_strength():
+    #     channel multiplier (std_dev multiplier):  2 -> 2.5
     "5_conservative": {
         "description":    "Wide thresholds (±0.25) + wider trend channel (2.5× std)",
         "weights":        {"indicator": 0.40, "trend": 0.40, "pattern": 0.20},
         "thresholds":     {"buy": 0.25,  "sell": -0.25,  "short": -0.50},
         "source_changes": [
-            "indicator_agent.py: oscillator scale 30→40",
-            "trend_agent.py: channel multiplier 2→2.5",
+            "indicator_agent.py: oscillator scale 30->40",
+            "trend_agent.py: channel multiplier 2->2.5",
         ],
     },
 
@@ -260,20 +260,20 @@ EXPERIMENT_CONFIGS: dict = {
     # regression and indicators only see ~1 month of context at a time).
     #
     # Design:
-    #   • 20-bar window  → regression line reacts to 4-week swings, not quarters
-    #   • Fast indicators (RSI=7, ROC=5) → catch momentum bursts quickly
-    #   • Trend-continuation formula    → ride the move, don't fade it
-    #   • Tight thresholds (±0.10)      → enter on smaller combined signals
-    #   • Trend-heavy weights           → momentum direction > oscillator state
+    #   • 20-bar window  -> regression line reacts to 4-week swings, not quarters
+    #   • Fast indicators (RSI=7, ROC=5) -> catch momentum bursts quickly
+    #   • Trend-continuation formula    -> ride the move, don't fade it
+    #   • Tight thresholds (±0.10)      -> enter on smaller combined signals
+    #   • Trend-heavy weights           -> momentum direction > oscillator state
     #
     # SOURCE FILE CHANGES:
-    #   indicator_agent.py → _compute_indicator_series:
-    #     RSI timeperiod: 14 → 7
-    #     ROC timeperiod: 10 → 5
-    #     MACD fastperiod/slowperiod/signalperiod: 12/26/9 → 8/20/6
-    #   indicator_agent.py → _normalize_indicator_signals:
-    #     oscillator scale (divisor): 30 → 20
-    #   trend_agent.py → quantify_trend_strength:
+    #   indicator_agent.py -> _compute_indicator_series:
+    #     RSI timeperiod: 14 -> 7
+    #     ROC timeperiod: 10 -> 5
+    #     MACD fastperiod/slowperiod/signalperiod: 12/26/9 -> 8/20/6
+    #   indicator_agent.py -> _normalize_indicator_signals:
+    #     oscillator scale (divisor): 30 -> 20
+    #   trend_agent.py -> quantify_trend_strength:
     #     normalized_signal = (position - 0.5) * 2.0   [continuation]
     "10_swing_momentum": {
         "description":    "Swing trader — 20-bar window, fast indicators, trend-continuation",
@@ -281,7 +281,7 @@ EXPERIMENT_CONFIGS: dict = {
         "thresholds":     {"buy": 0.10,  "sell": -0.10,  "short": -0.25},
         "window_bars":    20,
         "source_changes": [
-            "indicator_agent.py: RSI 14→7, ROC 10→5, MACD 12/26/9→8/20/6, scale 30→20",
+            "indicator_agent.py: RSI 14->7, ROC 10->5, MACD 12/26/9->8/20/6, scale 30->20",
             "trend_agent.py: normalized_signal = (position - 0.5) * 2.0",
             "window_bars=20 applied automatically from this config",
         ],
@@ -291,25 +291,25 @@ EXPERIMENT_CONFIGS: dict = {
     # Models a trader who enters at tested S/R levels with trend confirmation.
     #
     # Design:
-    #   • Tight channel (1.5× std)      → narrower bands = more precise S/R touch
+    #   • Tight channel (1.5× std)      -> narrower bands = more precise S/R touch
     #     (price pierces the band more often, generating more edge-of-channel signals)
-    #   • Strong slope amplification (1.5×) → only amplifies when trend direction
+    #   • Strong slope amplification (1.5×) -> only amplifies when trend direction
     #     agrees with channel position, filtering out counter-trend touches
-    #   • Mean-reversion formula stays  → price AT support = bullish (the S/R logic)
-    #   • Trend-heavy (0.60)            → channel position dominates signal
-    #   • Slightly tighter thresholds   → respond to genuine band touches
+    #   • Mean-reversion formula stays  -> price AT support = bullish (the S/R logic)
+    #   • Trend-heavy (0.60)            -> channel position dominates signal
+    #   • Slightly tighter thresholds   -> respond to genuine band touches
     #
     # SOURCE FILE CHANGES:
-    #   trend_agent.py → quantify_trend_strength():
-    #     channel multiplier:  2   → 1.5
-    #     slope amplification: 1.2 → 1.5
+    #   trend_agent.py -> quantify_trend_strength():
+    #     channel multiplier:  2   -> 1.5
+    #     slope amplification: 1.2 -> 1.5
     "11_sr_bands": {
         "description":    "S/R bands — tight channel (1.5×std), strong slope boost (1.5×)",
         "weights":        {"indicator": 0.20, "trend": 0.60, "pattern": 0.20},
         "thresholds":     {"buy": 0.12,  "sell": -0.12,  "short": -0.30},
         "source_changes": [
-            "trend_agent.py: channel multiplier 2→1.5",
-            "trend_agent.py: slope amplification 1.2→1.5",
+            "trend_agent.py: channel multiplier 2->1.5",
+            "trend_agent.py: slope amplification 1.2->1.5",
         ],
     },
 
@@ -318,29 +318,29 @@ EXPERIMENT_CONFIGS: dict = {
     # backed by an oversold/overbought indicator reading.
     #
     # Design:
-    #   • lookback=1   → CDL pattern must fire on TODAY's candle (no look-behind)
+    #   • lookback=1   -> CDL pattern must fire on TODAY's candle (no look-behind)
     #   • Remove Doji + Harami from _CDL_PATTERNS (low-edge noise patterns)
     #     Keeps: Engulfing, Hammer, InvertedHammer, MorningStar, EveningStar,
     #            ThreeWhiteSoldiers, ThreeBlackCrows, ShootingStar,
     #            DarkCloudCover, Piercing, Marubozu, AbandonedBaby
-    #   • Pattern-heavy (0.50)      → reversal candle is the primary signal
-    #   • Indicator supports (0.30) → RSI/Stoch confirm overbought/oversold
-    #   • Trend de-weighted (0.20)  → reversals occur AT trend extremes
-    #   • Wider thresholds (±0.18)  → require meaningful pattern + indicator
+    #   • Pattern-heavy (0.50)      -> reversal candle is the primary signal
+    #   • Indicator supports (0.30) -> RSI/Stoch confirm overbought/oversold
+    #   • Trend de-weighted (0.20)  -> reversals occur AT trend extremes
+    #   • Wider thresholds (±0.18)  -> require meaningful pattern + indicator
     #                                 agreement before triggering
     #
     # SOURCE FILE CHANGES:
-    #   quant_pipeline/quant_nodes.py → _CDL_PATTERNS list:
+    #   quant_pipeline/quant_nodes.py -> _CDL_PATTERNS list:
     #     Remove: ("Doji", ...) and ("Harami", ...) entries
-    #   quant_pipeline/quant_nodes.py → quantify_candlestick_patterns():
-    #     default lookback: 5 → 1
+    #   quant_pipeline/quant_nodes.py -> quantify_candlestick_patterns():
+    #     default lookback: 5 -> 1
     "12_reversal_hunter": {
         "description":    "Reversal hunter — pattern 0.50, high-reliability CDL only, lookback=1",
         "weights":        {"indicator": 0.30, "trend": 0.20, "pattern": 0.50},
         "thresholds":     {"buy": 0.18,  "sell": -0.18,  "short": -0.40},
         "source_changes": [
             "quant_pipeline/quant_nodes.py: remove Doji + Harami from _CDL_PATTERNS",
-            "quant_pipeline/quant_nodes.py: quantify_candlestick_patterns lookback 5→1",
+            "quant_pipeline/quant_nodes.py: quantify_candlestick_patterns lookback 5->1",
         ],
     },
 }
@@ -599,7 +599,7 @@ def collect_signals_quant(
     """
     Collect signals using the pure-quant pipeline — zero LLM calls.
 
-    Runs quant_indicator_node → quant_trend_node → quant_pattern_node →
+    Runs quant_indicator_node -> quant_trend_node -> quant_pattern_node ->
     make_trade_decision on each rebalance bar, mirroring exactly what
     master_portfolio.py does with --no-llm / set_graph_full_quant.
 
@@ -761,8 +761,8 @@ async def backtest_universe(
         Bars of OHLC context fed to the agents at each decision point.
 
     use_llm
-        True  → signals via LangGraph / TradingGraph (uses llm_config provider).
-        False → signals via pure-quant pipeline (quant_nodes.py +
+        True  -> signals via LangGraph / TradingGraph (uses llm_config provider).
+        False -> signals via pure-quant pipeline (quant_nodes.py +
                 decision_agent_quant.py), zero LLM calls, matches
                 master_portfolio.py --no-llm exactly.
 

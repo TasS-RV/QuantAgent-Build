@@ -71,11 +71,14 @@ def compute_quant_decision(
     atr_multiplier_sl: float = 2.0,
     risk_reward_target: float = 2.0,
     allow_short: bool = True,
+    market_context: Optional[dict] = None,
 ):
     """
     Compute a deterministic TradeDecision for one symbol from its kline data.
 
     kline_data: dict-of-lists with keys Open/High/Low/Close (Datetime optional).
+    market_context: optional dict (e.g. {"vix": .., "is_bullish_breakout": ..})
+      to apply the hard-coded constraints in constraints.py (issue #8 Obj2).
     Returns a quant_pipeline.decision_agent_quant.TradeDecision.
     """
     # Trend (scipy) — always available
@@ -101,7 +104,7 @@ def compute_quant_decision(
     if entry_price is not None:
         state["entry_price"] = entry_price
 
-    return make_trade_decision(
+    decision = make_trade_decision(
         state,
         weights            = weights    or DEFAULT_WEIGHTS,
         thresholds         = thresholds or DEFAULT_THRESHOLDS,
@@ -109,3 +112,15 @@ def compute_quant_decision(
         risk_reward_target = risk_reward_target,
         allow_short        = allow_short,
     )
+
+    # Apply hard-coded constraints / biases (VIX gate, breakout bias, ...).
+    if market_context:
+        from constraints import apply_constraints
+        _dir_map = {"BUY": 1, "SELL": -1, "SHORT": -1, "HOLD": 0}
+        orig = _dir_map.get(decision.decision, 0)
+        new_dir, _ = apply_constraints(orig, abs(decision.combined_signal), market_context)
+        if new_dir != orig:
+            decision.decision = {0: "HOLD", 1: "BUY", -1: "SELL"}[new_dir]
+            decision.decision_rationale += f" | constraint-adjusted ({orig:+d}->{new_dir:+d})"
+
+    return decision

@@ -61,6 +61,10 @@ class SimConfig:
     atr_period: int = 14
     atr_mult: float = 1.5
     allow_short: bool = True
+    # Position sizing: "full" = all-in (size 1.0); "confidence" = size scales with
+    # the signal's confidence, capped by max_position (IMPROVEMENTS_todo §1).
+    position_sizing: str = "full"        # "full" | "confidence"
+    max_position: float = 1.0            # cap on per-trade exposure fraction
     # Annualization for Sharpe (set from rebalance cadence)
     periods_per_year: float = 52.0
     trading_days_per_year: int = 252
@@ -78,9 +82,10 @@ class SimTrade:
     exit_reason: str           # "stop" | "target" | "horizon"
     confidence: float
     holding_days: int
-    gross_pnl_pct: float       # signed return before costs
+    gross_pnl_pct: float       # signed return before costs (per unit notional)
     cost_pct: float            # total round-trip cost as a fraction
-    pnl_pct: float             # net signed return
+    position_size: float       # exposure fraction applied (1.0 = all-in)
+    pnl_pct: float             # net signed return on portfolio (size-weighted)
     note: str = ""
 
 
@@ -216,7 +221,13 @@ def simulate(symbol: str, df: pd.DataFrame, signals: List[Signal],
         cost = (cfg.commission + cfg.slippage) * 2.0
         if direction == -1:
             cost += cfg.borrow_annual * (holding_days / cfg.trading_days_per_year)
-        net = gross - cost
+
+        # Position sizing: scale exposure (and its cost) by confidence if enabled.
+        if cfg.position_sizing == "confidence":
+            size = max(0.0, min(s.confidence, 1.0)) * cfg.max_position
+        else:
+            size = cfg.max_position
+        net = size * (gross - cost)
 
         trades.append(SimTrade(
             symbol=symbol,
@@ -231,6 +242,7 @@ def simulate(symbol: str, df: pd.DataFrame, signals: List[Signal],
             holding_days=holding_days,
             gross_pnl_pct=round(gross, 5),
             cost_pct=round(cost, 5),
+            position_size=round(size, 4),
             pnl_pct=round(net, 5),
             note=s.note,
         ))

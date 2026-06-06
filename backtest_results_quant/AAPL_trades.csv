@@ -1,4 +1,0 @@
-symbol,decision_date,direction,entry_date,entry_price,exit_date,exit_price,exit_reason,confidence,holding_days,gross_pnl_pct,cost_pct,pnl_pct,note
-AAPL,2024-12-13,1,2024-12-16,246.4156,2024-12-17,250.1578,target,0.371,1,0.01519,0.0014,0.01379,combined=+0.371 [Moderate] | ind=+0.000 | trend=+0.712 | pat=+0.429 | trend_dir=Uptrend | pattern=Engulfing + 1 more (43% conf)
-AAPL,2024-12-27,1,2024-12-30,250.6287,2025-01-02,244.1217,stop,0.374,2,-0.02596,0.0014,-0.02736,combined=+0.374 [Moderate] | ind=+0.000 | trend=+0.829 | pat=+0.214 | trend_dir=Uptrend | pattern=Marubozu (21% conf)
-AAPL,2025-01-31,-1,2025-02-03,228.5299,2025-02-10,228.3634,horizon,0.297,5,0.00073,0.0016,-0.00087,combined=-0.297 [Moderate] | ind=+0.000 | trend=-0.743 | pat=+0.000 | trend_dir=Downtrend | pattern=Harami + 1 more (0% conf)

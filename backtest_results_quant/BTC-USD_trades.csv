@@ -1,6 +1,0 @@
-symbol,decision_date,direction,entry_date,entry_price,exit_date,exit_price,exit_reason,confidence,holding_days,gross_pnl_pct,cost_pct,pnl_pct,note
-BTC-USD,2024-12-20,1,2024-12-21,97756.1953,2024-12-28,94160.1875,horizon,0.357,7,-0.03679,0.0014,-0.03819,combined=+0.357 [Moderate] | ind=+0.000 | trend=+1.000 | pat=-0.214 | trend_dir=Uptrend | pattern=Engulfing + 2 more (21% conf)
-BTC-USD,2024-12-27,1,2024-12-28,94160.1875,2025-01-04,98106.9922,horizon,0.311,7,0.04192,0.0014,0.04052,combined=+0.311 [Moderate] | ind=+0.000 | trend=+0.456 | pat=+0.643 | trend_dir=Downtrend | pattern=Engulfing + 2 more (64% conf)
-BTC-USD,2025-01-17,1,2025-01-18,104124.9531,2025-01-18,104181.0438,target,0.486,1,0.00054,0.0014,-0.00086,combined=+0.486 [Moderate] | ind=+0.000 | trend=+1.000 | pat=+0.429 | trend_dir=Uptrend | pattern=Marubozu + 1 more (43% conf)
-BTC-USD,2025-01-31,1,2025-02-01,102402.7969,2025-02-03,95655.894,stop,0.256,2,-0.06589,0.0014,-0.06729,combined=+0.256 [Moderate] | ind=+0.000 | trend=+0.747 | pat=-0.214 | trend_dir=Uptrend | pattern=Engulfing + 2 more (21% conf)
-BTC-USD,2025-02-07,1,2025-02-08,96533.2578,2025-02-15,97508.3828,horizon,0.239,7,0.0101,0.0014,0.0087,combined=+0.239 [Weak] | ind=+0.000 | trend=+0.383 | pat=+0.429 | trend_dir=Downtrend | pattern=Engulfing + 1 more (43% conf)

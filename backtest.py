@@ -76,7 +76,7 @@ LOOKBACK_PERIOD: str = "1y"
 #   "W-FRI" = weekly, on Friday close  (default)
 #   "2W"    = bi-weekly
 #   "M"     = monthly
-CADENCE: str = "W-FRI"
+CADENCE: str = "D"
 
 # ── Out-of-sample split ───────────────────────────────────────────────────────
 # Set to a YYYY-MM-DD string to get separate in-sample / out-of-sample metrics.
@@ -349,6 +349,7 @@ async def backtest_universe(
     use_llm: bool = True,
     quant_weights: dict | None = None,
     quant_thresholds: dict | None = None,
+    no_charts: bool = False,
 ) -> dict:
     """
     Collect signals per symbol then run the deterministic backtest engine
@@ -503,6 +504,20 @@ async def backtest_universe(
             print("[WARN] Agent does NOT cleanly beat the dumb 200dma baseline -- "
                   "do not add complexity until it does (see docs/BACKTEST_IMPROVEMENT_ROADMAP.md).")
 
+    # Auto-generate charts
+    if not no_charts:
+        try:
+            from visualize import render as _render
+            mode_label = "LLM agents" if use_llm else "pure-quant"
+            chart_title = (
+                f"QuantAgent ({mode_label})  |  "
+                f"{date_range}  |  cadence: {cadence}  |  window: {window_bars} bars"
+            )
+            print(f"\nGenerating charts in {out_dir} ...")
+            _render(out_dir, title=chart_title)
+        except Exception as e:
+            print(f"[WARN] Chart generation failed: {e}")
+
     return {
         "summary":   summary_df,
         "baselines": baseline_df,
@@ -584,6 +599,8 @@ def main():
                    help="Long-only mode (drop SHORT signals)")
 
     # ── LLM / quant mode ──────────────────────────────────────────────────────
+    p.add_argument("--no-charts", action="store_true",
+                   help="Skip chart generation after the backtest completes")
     p.add_argument("--concurrency", type=int, default=4,
                    help="(LLM mode only) parallel API calls per symbol")
     p.add_argument(
@@ -621,6 +638,7 @@ def main():
         cfg=cfg,
         oos_start=args.oos_start,
         use_llm=not args.no_llm,
+        no_charts=args.no_charts,
     ))
 
 

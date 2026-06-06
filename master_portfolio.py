@@ -78,6 +78,18 @@ DECISION_CONFIG: dict = {
 # Overridden at runtime by the --no-llm CLI flag.
 NO_LLM_MODE = True
 
+# When NO_LLM_MODE is True, this controls whether TA-Lib CDL candlestick
+# patterns (Engulfing, Hammer, MorningStar, EveningStar, etc.) contribute
+# to the combined signal.
+#
+#   True  → use TA-Lib CDL pattern node (default — good for day-by-day
+#            reversal detection on short timeframes like 1d / 1h)
+#   False → indicator + trend signals only; pattern weight redistributed
+#           proportionally so weights still sum to 1.0
+#
+# Has no effect when NO_LLM_MODE is False (LLM pattern agent is always used).
+USE_CDL_PATTERNS = True
+
 # Set True to save per-ticker charts after each run.
 # Output: charts/<TICKER>/pattern.png, trend.png, indicators.html
 SAVE_CHARTS = True
@@ -458,13 +470,27 @@ def main() -> List[dict]:
     if args.atr_mult is not None:
         dec_cfg["atr_multiplier_sl"] = args.atr_mult
 
+    # --- Pattern toggle (NO_LLM_MODE only) ---
+    # When USE_CDL_PATTERNS is False, zero out the pattern weight and
+    # redistribute it proportionally across indicator + trend so they
+    # still sum to 1.0.
+    if args.no_llm and not USE_CDL_PATTERNS:
+        _w = dict(dec_cfg.get("weights") or DECISION_CONFIG["weights"])
+        _pat_w = _w.pop("pattern", 0.0)
+        _total  = sum(_w.values()) or 1.0
+        for _k in _w:
+            _w[_k] = round(_w[_k] + _pat_w * (_w[_k] / _total), 6)
+        _w["pattern"] = 0.0
+        dec_cfg = {**dec_cfg, "weights": _w}
+
     from graph_setup import SetGraph
     from graph_util import TechnicalTools
 
     print("=" * 72)
     print(f"  QuantAgent Portfolio  —  {datetime.now().strftime('%Y-%m-%d %H:%M')}")
     if args.no_llm:
-        print(f"  Mode: NO-LLM (fully deterministic)  |  Tickers: {len(portfolio)}")
+        _pat_label = "CDL patterns ON" if USE_CDL_PATTERNS else "CDL patterns OFF (indicator+trend only)"
+        print(f"  Mode: NO-LLM (fully deterministic)  |  {_pat_label}  |  Tickers: {len(portfolio)}")
     else:
         print(f"  Provider: {args.provider}  |  Tickers: {len(portfolio)}")
     print("=" * 72)

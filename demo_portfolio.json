@@ -1,0 +1,37 @@
+{
+  "_note": [
+    "Demo portfolio used when USE_T212=False in master_portfolio.py.",
+    "allocation_pct : target % of total portfolio value for this position.",
+    "entry_price    : average cost basis (null = watching but not in position).",
+    "quantity       : number of shares / units held (0 = not in position)."
+  ],
+
+  "AAPL": {
+    "entry_price":    189.50,
+    "quantity":       10,
+    "lookback_days":  120,
+    "timeframe":      "1d",
+    "allocation_pct": 40.0
+  },
+  "TSLA": {
+    "entry_price":    null,
+    "quantity":       0,
+    "lookback_days":  90,
+    "timeframe":      "1d",
+    "allocation_pct": 20.0
+  },
+  "NVDA": {
+    "entry_price":    870.00,
+    "quantity":       3,
+    "lookback_days":  60,
+    "timeframe":      "1d",
+    "allocation_pct": 25.0
+  },
+  "BTC-USD": {
+    "entry_price":    null,
+    "quantity":       0,
+    "lookback_days":  90,
+    "timeframe":      "1d",
+    "allocation_pct": 15.0
+  }
+}

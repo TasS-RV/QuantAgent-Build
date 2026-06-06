@@ -93,7 +93,7 @@ class SetGraph:
         made in the final step, making decisions fully deterministic and
         backtestable.
         """
-        from decision_agent_quant import create_quant_decision_node
+        from quant_pipeline.decision_agent_quant import create_quant_decision_node
 
         agent_nodes = {}
         all_agents = ["indicator", "pattern", "trend"]
@@ -153,8 +153,8 @@ class SetGraph:
         Use this when you have no API quota or want a backtestable, reproducible
         signal pipeline.
         """
-        from quant_nodes import quant_indicator_node, quant_trend_node, quant_pattern_node
-        from decision_agent_quant import create_quant_decision_node
+        from quant_pipeline.quant_nodes import quant_indicator_node, quant_trend_node, quant_pattern_node
+        from quant_pipeline.decision_agent_quant import create_quant_decision_node
 
         decision_node = create_quant_decision_node(
             weights=weights,

@@ -364,8 +364,8 @@ def collect_signals_quant(
     Returns the same List[Signal] as collect_signals() so backtest_universe()
     can switch between the two transparently.
     """
-    from quant_nodes import quant_indicator_node, quant_trend_node, quant_pattern_node
-    from decision_agent_quant import make_trade_decision
+    from quant_pipeline.quant_nodes import quant_indicator_node, quant_trend_node, quant_pattern_node
+    from quant_pipeline.decision_agent_quant import make_trade_decision
 
     _DIR = {"BUY": 1, "SELL": -1, "SHORT": -1, "HOLD": 0}
     signals: list[Signal] = []

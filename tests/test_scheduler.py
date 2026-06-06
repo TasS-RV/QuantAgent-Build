@@ -16,7 +16,7 @@ try:
     import pandas as pd  # noqa: F401
     import requests  # noqa: F401  (trading212_client imports it at module load)
     from data_exchange.trading212_client import t212_to_yfinance, mock_portfolio
-    from quant_signal import compute_quant_decision
+    from quant_pipeline.quant_signal import compute_quant_decision
     import data_exchange.portfolio_scheduler as ps
     HAVE_DEPS = True
 except Exception:  # pragma: no cover

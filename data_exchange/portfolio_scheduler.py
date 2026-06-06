@@ -117,7 +117,7 @@ def analyse_holdings(
     decision. Degrades gracefully if transformers/torch or news are unavailable.
     `sentiment_scorer` is injectable for tests.
     """
-    from quant_signal import compute_quant_decision
+    from quant_pipeline.quant_signal import compute_quant_decision
     results = []
     for h in holdings:
         try:

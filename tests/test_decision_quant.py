@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 try:
     import numpy as np  # noqa: F401
     import pandas as pd  # noqa: F401
-    from decision_agent_quant import make_trade_decision
+    from quant_pipeline.decision_agent_quant import make_trade_decision
     HAVE_DEPS = True
 except Exception:  # pragma: no cover
     HAVE_DEPS = False

@@ -13,13 +13,20 @@ quant decision node (decision_agent_quant.py) works unchanged.
 from __future__ import annotations
 
 import json
+import sys
+from pathlib import Path
 from typing import Optional
 
 import numpy as np
 import talib
 
-from indicator_agent import quantify_indicators_from_kline
-from trend_agent import quantify_trend_from_kline
+# Ensure repo root is on sys.path so we can import indicator_agent / trend_agent
+_ROOT = Path(__file__).resolve().parent.parent
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
+
+from indicator_agent import quantify_indicators_from_kline  # noqa: E402
+from trend_agent import quantify_trend_from_kline           # noqa: E402
 
 
 # ─── Indicator node ───────────────────────────────────────────────────────────
@@ -123,7 +130,7 @@ def quantify_candlestick_patterns(kline_data: dict, lookback: int = 5) -> dict:
             "justification": "No candlestick patterns detected.",
         }
 
-    direction = 1 if total_score > 0 else (-1 if total_score < 0 else 0)
+    direction  = 1 if total_score > 0 else (-1 if total_score < 0 else 0)
     # Scale confidence: more patterns firing and higher aggregate = higher confidence
     confidence = round(min(abs(total_score) / _MAX_SCORE * 3, 1.0), 3)  # ×3 to spread range
 

@@ -6,6 +6,7 @@ import argparse
 import asyncio
 import json
 import math
+import os
 import sys
 from pathlib import Path
 from typing import Iterable
@@ -39,9 +40,14 @@ from backtest_engine import Signal, SimConfig, simulate, run_with_baselines, tra
 #  BACKTEST CONFIG — edit this or override via CLI flags
 # ─────────────────────────────────────────────────────────────────────────────
 
+# SYMBOLS: list[str] = [
+#     "AAPL", "MSFT", "NVDA", "GOOGL", "AMZN",
+#     "META", "AVGO", "TSLA", "BRK-B", "LLY",
+# ]
+
+
 SYMBOLS: list[str] = [
-    "AAPL", "MSFT", "NVDA", "GOOGL", "AMZN",
-    "META", "AVGO", "TSLA", "BRK-B", "LLY",
+    "NVDA", 
 ]
 
 # Rolling context window: bars of OHLC history fed to agents at each decision point.
@@ -68,7 +74,7 @@ END_DATE:   str | None = None   # e.g. "2025-02-01"
 
 # Fallback when START_DATE is None: how far back from END_DATE to fetch data.
 # yfinance period string — "1y", "6mo", "2y", "5y", etc.
-LOOKBACK_PERIOD: str = "1y"
+LOOKBACK_PERIOD: str = "6mo"
 
 # ── Cadence ───────────────────────────────────────────────────────────────────
 # How often trade decisions are made (pandas resample alias).
@@ -76,12 +82,26 @@ LOOKBACK_PERIOD: str = "1y"
 #   "W-FRI" = weekly, on Friday close  (default)
 #   "2W"    = bi-weekly
 #   "M"     = monthly
-CADENCE: str = "D"
+CADENCE: str = "W-Fri"
 
 # ── Out-of-sample split ───────────────────────────────────────────────────────
 # Set to a YYYY-MM-DD string to get separate in-sample / out-of-sample metrics.
 # Useful for detecting overfitting.
 OOS_START: str | None = None   # e.g. "2025-01-01"
+
+# ── LLM Provider (used when NOT running --no-llm) ────────────────────────────
+# Provider for LLM-assisted signal collection via the LangGraph pipeline.
+# Supports the same providers as master_portfolio.py:
+#   "google"    → Gemini (auto-loads key from ../Gemini_API.txt)
+#   "openai"    → OpenAI via LangGraph
+#   "anthropic" → Claude via LangGraph
+#
+# Usage: python backtest.py --llm --provider google
+DEFAULT_LLM_PROVIDER: str = "google"
+
+GEMINI_KEY_FILE = Path(__file__).resolve().parent.parent / "Gemini_API.txt"
+DEFAULT_GEMINI_AGENT_MODEL: str = "gemini-3.1-flash-lite"
+DEFAULT_GEMINI_GRAPH_MODEL: str = "gemini-3.1-flash-lite"
 
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -95,6 +115,45 @@ _CADENCE_PPY = {
 
 def _periods_per_year(cadence: str) -> float:
     return _CADENCE_PPY.get(cadence.upper(), 52.0)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  LLM CONFIG HELPERS  (mirrors master_portfolio.py)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def load_google_api_key() -> str | None:
+    """Load Gemini API key from ../Gemini_API.txt or GOOGLE_API_KEY env var."""
+    if GEMINI_KEY_FILE.is_file():
+        key = GEMINI_KEY_FILE.read_text(encoding="utf-8").strip()
+        if key:
+            return key
+    return os.environ.get("GOOGLE_API_KEY")
+
+
+def build_llm_config(provider: str, api_key: str | None = None) -> dict:
+    """
+    Build a TradingGraph LLM config dict for the chosen provider.
+    Mirrors master_portfolio.py's build_llm_config() exactly.
+    """
+    _key_map = {
+        "openai":    "api_key",
+        "anthropic": "anthropic_api_key",
+        "google":    "google_api_key",
+    }
+    llm_config: dict = {
+        "agent_llm_provider": provider,
+        "graph_llm_provider": provider,
+    }
+    if provider == "google":
+        llm_config["agent_llm_model"] = DEFAULT_GEMINI_AGENT_MODEL
+        llm_config["graph_llm_model"] = DEFAULT_GEMINI_GRAPH_MODEL
+        resolved_key = api_key or load_google_api_key()
+        if resolved_key:
+            llm_config["google_api_key"] = resolved_key
+            os.environ["GOOGLE_API_KEY"] = resolved_key
+    elif api_key:
+        llm_config[_key_map.get(provider, "api_key")] = api_key
+    return llm_config
 
 
 # ---------- Data ----------
@@ -332,6 +391,89 @@ def collect_signals_quant(
     return signals
 
 
+# ---------- Signal collection (LangGraph / TradingGraph — any provider) ----------
+
+def collect_signals_langgraph(
+    symbol: str,
+    df: pd.DataFrame,
+    rebalance_idxs: list[int],
+    llm_config: dict,
+    window_bars: int = WINDOW_BARS,
+    dec_cfg: dict | None = None,
+) -> list[Signal]:
+    """
+    Collect signals via the LangGraph / TradingGraph pipeline at each rebalance bar.
+
+    Supports any LLM provider (Google/Gemini, OpenAI, Anthropic …) — just pass
+    the llm_config dict produced by build_llm_config().  This mirrors exactly
+    what master_portfolio.py does in LLM mode (set_graph_quant path).
+
+    dec_cfg is the optional decision-engine config dict (weights, thresholds,
+    atr_multiplier_sl, risk_reward_target, allow_short); defaults match
+    master_portfolio.py's DECISION_CONFIG if omitted.
+    """
+    from trading_graph import TradingGraph
+
+    dec_cfg = dec_cfg or {
+        "weights":            {"indicator": 0.40, "trend": 0.40, "pattern": 0.20},
+        "thresholds":         {"buy": 0.15, "sell": -0.15, "short": -0.35},
+        "atr_multiplier_sl":  2.0,
+        "risk_reward_target": 2.0,
+        "allow_short":        True,
+    }
+
+    trading_graph = TradingGraph(config=llm_config)
+    trading_graph.ensure_initialized()
+    compiled_graph = trading_graph.graph_setup.set_graph_quant(
+        weights            = dec_cfg.get("weights"),
+        thresholds         = dec_cfg.get("thresholds"),
+        atr_multiplier_sl  = dec_cfg["atr_multiplier_sl"],
+        risk_reward_target = dec_cfg["risk_reward_target"],
+        allow_short        = dec_cfg["allow_short"],
+    )
+
+    _DIR = {"BUY": 1, "SELL": -1, "SHORT": -1, "HOLD": 0}
+    signals: list[Signal] = []
+
+    for idx in tqdm(
+        rebalance_idxs,
+        desc=f"  {symbol:<6} llm({llm_config.get('agent_llm_provider','?')})",
+        unit="bar",
+        leave=False,
+        dynamic_ncols=True,
+    ):
+        kline = window_to_kline(df, idx, window=window_bars)
+        state: dict = {
+            "kline_data":  kline,
+            "time_frame":  "1d",
+            "stock_name":  symbol,
+            "entry_price": None,
+            "messages":    [],
+        }
+        try:
+            final_state = compiled_graph.invoke(state)
+            raw = final_state.get("final_trade_decision", "{}")
+            decision_dict = json.loads(raw) if isinstance(raw, str) else raw
+            dec       = decision_dict.get("decision", "HOLD")
+            direction = _DIR.get(dec, 0)
+            conf      = float(decision_dict.get("combined_signal", 0.0))
+            rr        = float(decision_dict.get("risk_reward_ratio", 2.0))
+            note      = decision_dict.get("decision_rationale", "")[:200]
+        except Exception as e:
+            direction, conf, rr, note = 0, 0.0, 2.0, f"ERROR: {type(e).__name__}: {e}"
+
+        signals.append(Signal(
+            decision_idx      = idx,
+            direction         = direction,
+            confidence        = round(abs(conf), 4),
+            risk_reward_ratio = rr if rr > 0 else 2.0,
+            date              = str(df["Datetime"].iloc[idx].date()),
+            note              = note,
+        ))
+
+    return signals
+
+
 # ---------- Backtest orchestration ----------
 
 async def backtest_universe(
@@ -350,6 +492,7 @@ async def backtest_universe(
     quant_weights: dict | None = None,
     quant_thresholds: dict | None = None,
     no_charts: bool = False,
+    llm_config: dict | None = None,
 ) -> dict:
     """
     Collect signals per symbol then run the deterministic backtest engine
@@ -364,10 +507,14 @@ async def backtest_universe(
         Bars of OHLC context fed to the agents at each decision point.
 
     use_llm
-        True  → signals via OpenAI Agents SDK (quant_agents.py)
+        True  → signals via LangGraph / TradingGraph (uses llm_config provider).
         False → signals via pure-quant pipeline (quant_nodes.py +
                 decision_agent_quant.py), zero LLM calls, matches
                 master_portfolio.py --no-llm exactly.
+
+    llm_config
+        Provider config dict produced by build_llm_config().
+        Only used when use_llm=True.  If None, auto-built from DEFAULT_LLM_PROVIDER.
 
     oos_start
         Optional YYYY-MM-DD — report separate metrics on decisions
@@ -377,6 +524,9 @@ async def backtest_universe(
     out_dir.mkdir(parents=True, exist_ok=True)
     cfg = cfg or SimConfig(periods_per_year=_periods_per_year(cadence))
 
+    if use_llm and llm_config is None:
+        llm_config = build_llm_config(DEFAULT_LLM_PROVIDER)
+
     all_signals: dict[str, list[Signal]] = {}
     all_trades:  dict[str, list[dict]]   = {}
     histories:   dict[str, pd.DataFrame] = {}
@@ -384,7 +534,11 @@ async def backtest_universe(
     baseline_rows: list[dict] = []
 
     symbols = list(symbols)
-    mode_label = "LLM agents (OpenAI)" if use_llm else "pure-quant (no LLM)"
+    if use_llm:
+        provider = (llm_config or {}).get("agent_llm_provider", DEFAULT_LLM_PROVIDER)
+        mode_label = f"LLM agents ({provider})"
+    else:
+        mode_label = "pure-quant (no LLM)"
     date_range = f"{start_date or 'all'} -> {end_date or 'today'}"
 
     print(f"  Signal mode : {mode_label}")
@@ -413,9 +567,9 @@ async def backtest_universe(
         histories[symbol] = df
 
         if use_llm:
-            signals = await collect_signals(
+            signals = collect_signals_langgraph(
                 symbol, df, idxs,
-                concurrency=concurrency,
+                llm_config=llm_config,
                 window_bars=window_bars,
             )
         else:
@@ -508,7 +662,6 @@ async def backtest_universe(
     if not no_charts:
         try:
             from visualize import render as _render
-            mode_label = "LLM agents" if use_llm else "pure-quant"
             chart_title = (
                 f"QuantAgent ({mode_label})  |  "
                 f"{date_range}  |  cadence: {cadence}  |  window: {window_bars} bars"
@@ -603,13 +756,36 @@ def main():
                    help="Skip chart generation after the backtest completes")
     p.add_argument("--concurrency", type=int, default=4,
                    help="(LLM mode only) parallel API calls per symbol")
-    p.add_argument(
+
+    llm_group = p.add_mutually_exclusive_group()
+    llm_group.add_argument(
         "--no-llm", action="store_true",
         help=(
             "Use the pure-quant pipeline (zero LLM calls). "
             "Runs quant_indicator_node -> quant_trend_node -> quant_pattern_node -> "
             "make_trade_decision, matching master_portfolio.py --no-llm exactly. "
-            "No OpenAI API key required."
+            "No API key required. (default)"
+        ),
+    )
+    llm_group.add_argument(
+        "--llm", dest="no_llm", action="store_false",
+        help=(
+            "Use the LangGraph LLM pipeline (overrides --no-llm default). "
+            "Requires --provider and a valid API key."
+        ),
+    )
+    p.set_defaults(no_llm=True)
+
+    p.add_argument(
+        "--provider", default=DEFAULT_LLM_PROVIDER,
+        choices=["google", "openai", "anthropic", "qwen", "minimax"],
+        help="LLM provider to use when --llm is set (default: %(default)s)",
+    )
+    p.add_argument(
+        "--api-key", default=None, metavar="KEY",
+        help=(
+            "API key for the chosen provider. "
+            "For 'google', auto-loaded from ../Gemini_API.txt if not provided."
         ),
     )
 
@@ -626,6 +802,13 @@ def main():
         periods_per_year=_periods_per_year(args.cadence),
     )
 
+    use_llm = not args.no_llm
+    llm_config = build_llm_config(args.provider, args.api_key) if use_llm else None
+
+    if use_llm:
+        provider = args.provider
+        print(f"  LLM mode    : {provider}  ({DEFAULT_GEMINI_AGENT_MODEL if provider == 'google' else 'default model'})")
+
     asyncio.run(backtest_universe(
         symbols=args.symbols,
         start_date=args.start,
@@ -637,8 +820,9 @@ def main():
         out_dir=args.out,
         cfg=cfg,
         oos_start=args.oos_start,
-        use_llm=not args.no_llm,
+        use_llm=use_llm,
         no_charts=args.no_charts,
+        llm_config=llm_config,
     ))
 
 

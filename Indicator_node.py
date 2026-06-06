@@ -6,7 +6,7 @@ from google.genai import types
 from API_client import client 
 import io
 
-from Tele_bot import send_telegram_alert
+from data_exchange.Tele_bot import send_telegram_alert
 
 
 def run_indicator_agent(state: dict) -> dict:

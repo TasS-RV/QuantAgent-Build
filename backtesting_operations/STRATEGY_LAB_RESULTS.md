@@ -83,6 +83,35 @@ ordinal-only until we switch to a daily-equity Sharpe.
 
 ---
 
+## Output artifacts (charts)
+
+Every config now emits a `backtest_results`-style directory with full visuals:
+
+```
+strategy_results/
+  summary.csv          ← full matrix (per config × symbol)
+  aggregate.csv        ← ranked averages
+  configs/<strategy>__<direction>__<exit>/
+      summary.csv              per-symbol metrics (backtest.py schema)
+      all_trades.json          every trade (entry/exit/pnl/reason)
+      all_signals.json         entry events
+      <SYM>_history.csv        OHLC history
+      <SYM>_trades.csv         per-symbol trade ledger
+      <SYM>_detail.png         3-panel: price+entry/exit markers+holding shading,
+                               per-trade P&L bars, equity vs B&H
+      equity_curves.png        per-symbol agent vs B&H grid
+      portfolio_equity.png     equal-weighted portfolio equity
+      returns_bar.png          total-return bars
+```
+
+24 config directories (6 strategies × 2 directions × 2 exits). Charts are produced by
+reusing `visualize.render()` — identical format to the original `backtest.py` runs.
+Start with `configs/ma_cross_50_200__long_flat__regime/` (the winner).
+
+Re-run: `python strategy_lab.py --out strategy_results`  (add `--no-charts` for CSVs only).
+
+---
+
 ## Recommended Round 2
 
 1. **Fix the trailing-stop re-entry for regime strategies** — after a trailing-stop

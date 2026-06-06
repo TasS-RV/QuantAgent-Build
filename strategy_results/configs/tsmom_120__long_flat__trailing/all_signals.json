@@ -1,0 +1,1013 @@
+{
+  "GOOGL": [
+    {
+      "date": "2015-04-08",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2015-04-27",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2015-04-29",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2015-05-05",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2015-05-15",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2016-04-26",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2016-07-11",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2016-07-18",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2016-07-27",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2018-04-27",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2018-05-07",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2018-11-08",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2018-11-16",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2019-03-12",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2019-03-19",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2019-04-02",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2019-06-05",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2019-06-11",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2019-07-01",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2019-08-27",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2019-09-06",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2019-09-13",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2019-10-21",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2020-03-11",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2020-04-15",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2020-04-20",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2020-04-24",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2020-04-30",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2020-06-30",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2020-08-13",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2022-02-02",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2022-03-22",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2022-04-04",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2023-03-17",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2023-04-03",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2023-04-21",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2024-03-13",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2024-10-22",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2024-10-30",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2024-11-07",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2024-11-20",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2024-12-10",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2025-03-20",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2025-05-22",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2025-05-28",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2025-07-31",
+      "direction": 1,
+      "note": "trailing"
+    }
+  ],
+  "XOM": [
+    {
+      "date": "2015-06-11",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2015-11-04",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2016-01-15",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2016-01-27",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2016-01-29",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2016-02-04",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2016-10-19",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2016-10-25",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2016-12-13",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2017-01-24",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2017-03-16",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2017-09-15",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2017-09-26",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2017-09-29",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2018-02-23",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2018-05-11",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2018-05-31",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2018-06-07",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2018-07-27",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2018-11-05",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2018-11-15",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2018-12-04",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2019-02-19",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2019-02-27",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2019-03-04",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2019-04-08",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2019-05-13",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2019-05-17",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2019-06-11",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2020-09-02",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2020-12-17",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2020-12-22",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2020-12-28",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2021-01-06",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2021-08-24",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2021-09-14",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2021-09-16",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2021-09-24",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2021-12-03",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2021-12-08",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2021-12-17",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2021-12-27",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2023-06-02",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2023-06-20",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2023-06-29",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2023-07-05",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2023-08-14",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2023-08-21",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2023-08-30",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2023-10-24",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2023-11-02",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2023-11-20",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2023-12-27",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2024-01-04",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2024-03-26",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2024-09-18",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2024-10-03",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2024-11-05",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2025-03-03",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2025-03-11",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2025-03-18",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2025-03-20",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2025-06-12",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2025-07-23",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2025-08-07",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2025-08-21",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2025-08-25",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2025-09-17",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2025-09-26",
+      "direction": 1,
+      "note": "trailing"
+    }
+  ],
+  "JNJ": [
+    {
+      "date": "2015-01-05",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2015-02-27",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2015-03-03",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2015-04-08",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2015-07-14",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2015-07-17",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2015-07-22",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2015-07-24",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2015-07-31",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2015-08-11",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2015-10-23",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2015-11-12",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2015-11-17",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2016-01-15",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2016-01-27",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2016-12-13",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2017-02-17",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2018-02-07",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2018-02-20",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2018-02-26",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2018-03-12",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2018-03-14",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2018-07-30",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2018-08-13",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2019-01-07",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2019-01-30",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2019-02-14",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2019-03-12",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2019-03-21",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2019-04-08",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2019-04-17",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2019-06-11",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2019-07-30",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2019-08-05",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2019-11-18",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2019-12-05",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2019-12-12",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2019-12-17",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2020-03-16",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2020-03-18",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2020-03-31",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2020-06-18",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2020-06-22",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2020-07-15",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2020-08-06",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2020-08-10",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2020-10-12",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2020-11-10",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2020-11-30",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2020-12-02",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2021-07-21",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2021-10-08",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2021-10-18",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2021-10-27",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2021-12-07",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2022-01-31",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2022-03-03",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2022-11-09",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2022-11-22",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2022-12-19",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2023-02-03",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2023-04-06",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2023-04-13",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2023-07-21",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2023-12-04",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2024-01-02",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2024-02-26",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2024-03-11",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2024-03-21",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2024-04-22",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2024-05-02",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2024-07-18",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2024-07-26",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2024-08-22",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2024-12-16",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2024-12-18",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2024-12-23",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2025-02-24",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2025-03-03",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2025-03-17",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2025-04-04",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2025-05-01",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2025-05-05",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2025-05-19",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2025-05-21",
+      "direction": 1,
+      "note": "trailing"
+    },
+    {
+      "date": "2025-05-28",
+      "direction": 1,
+      "note": "trailing"
+    }
+  ]
+}

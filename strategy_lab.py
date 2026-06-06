@@ -568,9 +568,14 @@ def main():
     p.add_argument("--start", default=START_DATE)
     p.add_argument("--end", default=END_DATE)
     p.add_argument("--out", default="strategy_results")
+    p.add_argument("--no-charts", action="store_true",
+                   help="Skip per-config directory + chart emission (matrix CSVs only)")
     args = p.parse_args()
 
-    df_out, agg = run_matrix(args.symbols, args.start, args.end, Path(args.out))
+    df_out, agg = run_matrix(
+        args.symbols, args.start, args.end, Path(args.out),
+        emit_charts=not args.no_charts,
+    )
 
     pd.set_option("display.width", 200)
     pd.set_option("display.max_rows", 200)

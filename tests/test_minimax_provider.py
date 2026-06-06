@@ -4,7 +4,7 @@ import os
 import sys
 import types
 import unittest
-from unittest.mock import MagicMock, patch, PropertyMock
+from unittest.mock import ANY, MagicMock, patch, PropertyMock
 
 # Add project root to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -201,6 +201,7 @@ class TestTradingGraphCreateLlm(unittest.TestCase):
             temperature=0.1,
             api_key="test-key",
             openai_api_base="https://api.minimax.io/v1",
+            callbacks=ANY,   # cost-guard callback attached to every LLM
         )
 
     @patch("trading_graph.ChatOpenAI")
@@ -220,6 +221,7 @@ class TestTradingGraphCreateLlm(unittest.TestCase):
             temperature=0.1,
             api_key="test-cn-key",
             openai_api_base="https://api.minimaxi.com/v1",
+            callbacks=ANY,   # cost-guard callback attached to every LLM
         )
 
     @patch("trading_graph.ChatOpenAI")

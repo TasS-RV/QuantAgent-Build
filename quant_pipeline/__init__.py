@@ -28,13 +28,22 @@ from quant_pipeline.decision_agent_quant import (  # noqa: E402
     DEFAULT_THRESHOLDS,
     TradeDecision,
 )
-from quant_pipeline.quant_nodes import (  # noqa: E402
-    quant_indicator_node,
-    quant_trend_node,
-    quant_pattern_node,
-    quantify_candlestick_patterns,
-)
 from quant_pipeline.quant_signal import compute_quant_decision  # noqa: E402
+
+# quant_nodes depends on TA-Lib (C library). Import it lazily/guarded so the
+# rest of the package (the pure numpy/pandas decision logic) remains usable on
+# systems without TA-Lib installed — the talib-backed nodes simply aren't
+# re-exported there.
+try:
+    from quant_pipeline.quant_nodes import (  # noqa: E402
+        quant_indicator_node,
+        quant_trend_node,
+        quant_pattern_node,
+        quantify_candlestick_patterns,
+    )
+    _HAVE_TALIB_NODES = True
+except ImportError:
+    _HAVE_TALIB_NODES = False
 
 __all__ = [
     "create_quant_decision_node",
@@ -42,9 +51,12 @@ __all__ = [
     "DEFAULT_WEIGHTS",
     "DEFAULT_THRESHOLDS",
     "TradeDecision",
-    "quant_indicator_node",
-    "quant_trend_node",
-    "quant_pattern_node",
-    "quantify_candlestick_patterns",
     "compute_quant_decision",
 ]
+if _HAVE_TALIB_NODES:
+    __all__ += [
+        "quant_indicator_node",
+        "quant_trend_node",
+        "quant_pattern_node",
+        "quantify_candlestick_patterns",
+    ]

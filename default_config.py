@@ -30,6 +30,8 @@ DEFAULT_CONFIG = {
     "openai_api_key":      os.environ.get("OPENAI_API_KEY", ""),
     "anthropic_api_key":   os.environ.get("ANTHROPIC_API_KEY", ""),
     "qwen_api_key":        os.environ.get("DASHSCOPE_API_KEY", ""),
+    "minimax_api_key":     os.environ.get("MINIMAX_API_KEY", ""),
+    "minimax_cn_api_key":  os.environ.get("MINIMAX_CN_API_KEY", os.environ.get("MINIMAX_API_KEY", "")),
     "google_api_key":      os.environ.get("GOOGLE_API_KEY", ""),
     "featherless_api_key": os.environ.get("FEATHERLESS_API_KEY", ""),
 }

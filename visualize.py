@@ -50,6 +50,9 @@ def _equity_curve_from_trades(trades_df: pd.DataFrame) -> pd.Series:
     trades_df = trades_df.sort_values("decision_date").reset_index(drop=True)
     eq = (1 + trades_df["pnl_pct"]).cumprod()
     eq.index = pd.to_datetime(trades_df["exit_date"])
+    # Multiple trades can share an exit_date -> duplicate index breaks reindex().
+    # Keep the last cumulative-equity value per date so the index is unique.
+    eq = eq[~eq.index.duplicated(keep="last")]
     return eq
 
 

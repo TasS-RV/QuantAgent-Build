@@ -1,22 +1,21 @@
 """
-Trading 212 API client — fetch the current portfolio (issue #3, step 1).
+Trading 212 API client — fetch the current portfolio.
 
 Reads open equity positions from the Trading 212 public API. The API key is
 loaded (in priority order) from:
   1. the ``api_key`` argument
-  2. the ``TRADING212_API_KEY`` environment variable
-  3. ``../trading212_key.txt`` (one folder above the repo — same convention as
-     the Gemini / Telegram secrets, keeping keys out of version control)
+  2. ``.env.keys`` in the repo root  (key name: ``T212_key``)
+  3. ``TRADING212_API_KEY`` environment variable
+  4. ``../trading212_key.txt``  (legacy flat-file location)
 
 Use ``demo=True`` (or env ``TRADING212_DEMO=1``) to hit the practice account.
 
-⚠️  ETF caveat (issue #3, step 2)
---------------------------------
+ETF caveat
+----------
 Trading 212 returns an ETF (e.g. ``VUAG_l_EQ`` / S&P 500) as a *single*
 position with one ticker and price. The decision pipeline therefore analyses
-the ETF's **own** price series — its surface OHLC — not the 500 underlying
-constituents. Treat ETF signals as a view on the fund's price action, not a
-bottom-up aggregation of its holdings.
+the ETF's **own** price series — not the 500 underlying constituents.
+Treat ETF signals as a view on the fund's price action only.
 """
 
 from __future__ import annotations
@@ -26,10 +25,20 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional
 
+import sys
+
 import requests
 
 LIVE_BASE = "https://live.trading212.com/api/v0"
 DEMO_BASE = "https://demo.trading212.com/api/v0"
+
+# Repo root (QuantAgent-Build/) — needed to import env_keys.py
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
+# Legacy flat-file fallback (kept for backwards compat)
+_KEY_FILE = _REPO_ROOT.parent / "trading212_key.txt"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -50,10 +59,18 @@ class Position:
     def market_value(self) -> float:
         return self.quantity * self.current_price
 
+    @property
+    def pnl_pct(self) -> float:
+        if self.average_price > 0:
+            return (self.current_price - self.average_price) / self.average_price * 100
+        return 0.0
+
 
 # Common ETF tickers (extend as needed) — used to flag the ETF caveat.
-_KNOWN_ETF_HINTS = ("VUSA", "VUAG", "VWRL", "VWRP", "SPY", "VOO", "QQQ", "CSPX",
-                    "EQQQ", "IWDA", "VUKE", "ISF", "VFEM", "AGGG")
+_KNOWN_ETF_HINTS = (
+    "VUSA", "VUAG", "VWRL", "VWRP", "SPY", "VOO", "QQQ", "CSPX",
+    "EQQQ", "IWDA", "VUKE", "ISF", "VFEM", "AGGG",
+)
 
 
 def t212_to_yfinance(ticker: str) -> str:
@@ -88,47 +105,106 @@ def _looks_like_etf(yf_symbol: str) -> bool:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _load_key(api_key: Optional[str]) -> Optional[str]:
+    """Load API key from argument → .env.keys → env var → legacy txt file."""
     if api_key:
         return api_key
-    env = os.environ.get("TRADING212_API_KEY")
-    if env:
-        return env
-    key_path = Path(os.getcwd()).resolve().parent / "trading212_key.txt"
-    if key_path.exists():
-        return key_path.read_text().strip()
+    try:
+        from env_keys import get_key
+        val = get_key("T212_key", "TRADING212_API_KEY")
+        if val:
+            return val
+    except ImportError:
+        pass
+    val = os.environ.get("TRADING212_API_KEY")
+    if val:
+        return val
+    if _KEY_FILE.exists():
+        return _KEY_FILE.read_text(encoding="utf-8").strip()
     return None
 
 
+def _load_secret(api_secret: Optional[str]) -> Optional[str]:
+    """Load API secret from argument → .env.keys → env var."""
+    if api_secret:
+        return api_secret
+    try:
+        from env_keys import get_key
+        val = get_key("T212_secret", "TRADING212_API_SECRET")
+        if val:
+            return val
+    except ImportError:
+        pass
+    return os.environ.get("TRADING212_API_SECRET")
+
+
 class Trading212Client:
-    def __init__(self, api_key: Optional[str] = None, demo: Optional[bool] = None,
-                 timeout: int = 15):
-        self.api_key = _load_key(api_key)
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        api_secret: Optional[str] = None,
+        demo: Optional[bool] = None,
+        timeout: int = 15,
+    ):
+        self.api_key    = _load_key(api_key)
+        self.api_secret = _load_secret(api_secret)
         if demo is None:
             demo = os.environ.get("TRADING212_DEMO", "") in ("1", "true", "True")
-        self.base = DEMO_BASE if demo else LIVE_BASE
+        self.base    = DEMO_BASE if demo else LIVE_BASE
         self.timeout = timeout
 
     def _headers(self) -> dict:
         if not self.api_key:
             raise RuntimeError(
-                "No Trading 212 API key. Set TRADING212_API_KEY, pass api_key=, "
-                "or create ../trading212_key.txt. (Or use mock_portfolio() to test.)"
+                "No Trading 212 API key found.\n"
+                "Add these two lines to .env.keys in the repo root:\n"
+                "  T212_key=<your-api-key>\n"
+                "  T212_secret=<your-api-secret>\n"
+                "Or use --mock to run on demo data without any key."
             )
+        if self.api_secret:
+            # T212 uses HTTP Basic Auth: base64(key:secret)
+            import base64
+            token = base64.b64encode(
+                f"{self.api_key}:{self.api_secret}".encode("utf-8")
+            ).decode("utf-8")
+            return {"Authorization": f"Basic {token}"}
+        # Fallback: plain key (some older T212 beta endpoints accepted this)
         return {"Authorization": self.api_key}
 
     def get_portfolio(self) -> List[Position]:
         """GET /equity/portfolio → list of open Position objects."""
-        resp = requests.get(f"{self.base}/equity/portfolio",
-                            headers=self._headers(), timeout=self.timeout)
+        resp = requests.get(
+            f"{self.base}/equity/portfolio",
+            headers=self._headers(),
+            timeout=self.timeout,
+        )
         resp.raise_for_status()
         return [self._parse_position(p) for p in resp.json()]
 
     def get_cash(self) -> dict:
-        """GET /equity/account/cash → raw cash dict (free/total/invested...)."""
-        resp = requests.get(f"{self.base}/equity/account/cash",
-                            headers=self._headers(), timeout=self.timeout)
+        """GET /equity/account/cash → raw cash dict (free/total/invested ...)."""
+        resp = requests.get(
+            f"{self.base}/equity/account/cash",
+            headers=self._headers(),
+            timeout=self.timeout,
+        )
         resp.raise_for_status()
         return resp.json()
+
+    def place_order(self, ticker: str, quantity: float, **kwargs):
+        """
+        Place a real order. BLOCKED by default — gated by the safety rails.
+
+        Decisions in this project are advisory; live order placement requires
+        PAPER_TRADING off + QUANT_LIVE_TRADING=1 + kill switch off (see safety.py).
+        Until the live execution layer is built this is intentionally a stub that
+        refuses to trade rather than silently no-op.
+        """
+        from safety import require_live_trading
+        require_live_trading(f"place {quantity} {ticker} order")
+        raise NotImplementedError(
+            "Live order execution is not implemented yet (paper/advisory only). "
+            "Implement the T212 order endpoint here once the execution layer is ready.")
 
     @staticmethod
     def _parse_position(p: dict) -> Position:
@@ -152,8 +228,9 @@ class Trading212Client:
 def mock_portfolio() -> List[Position]:
     """A representative portfolio (incl. an ETF) for dry-run / tests."""
     raw = [
-        {"ticker": "AAPL_US_EQ", "quantity": 10, "averagePrice": 180.0, "currentPrice": 195.0, "ppl": 150.0},
-        {"ticker": "NVDA_US_EQ", "quantity": 5,  "averagePrice": 850.0, "currentPrice": 820.0, "ppl": -150.0},
-        {"ticker": "VUSA_l_EQ",  "quantity": 20, "averagePrice": 78.0,  "currentPrice": 83.0,  "ppl": 100.0},
+        {"ticker": "AAPL_US_EQ", "quantity": 10,  "averagePrice": 180.0, "currentPrice": 195.0, "ppl":  150.0},
+        {"ticker": "NVDA_US_EQ", "quantity": 5,   "averagePrice": 850.0, "currentPrice": 820.0, "ppl": -150.0},
+        {"ticker": "TSLA_US_EQ", "quantity": 8,   "averagePrice": 240.0, "currentPrice": 275.0, "ppl":  280.0},
+        {"ticker": "VUSA_l_EQ",  "quantity": 20,  "averagePrice":  78.0, "currentPrice":  83.0, "ppl":  100.0},
     ]
     return [Trading212Client._parse_position(p) for p in raw]

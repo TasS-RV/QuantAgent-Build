@@ -5,17 +5,16 @@ QuantAgent Master Portfolio Script
 Runs the full LangGraph pipeline (Indicator → Pattern → Trend → Quant Decision)
 across a configurable portfolio of tickers and prints a decision table.
 
-Edit PORTFOLIO and DECISION_CONFIG below, then run:
+Quick start
+───────────
+    python master_portfolio.py                        # demo portfolio, no LLM
+    python master_portfolio.py --llm --provider google  # Gemini LLM mode
+    python master_portfolio.py --breakdown            # print per-ticker signal breakdown
 
-    python master_portfolio.py
-    python master_portfolio.py --provider anthropic --api-key sk-ant-...
-    python master_portfolio.py --no-short --rr-target 1.5 --output results.json
-
-Portfolio config per ticker
-───────────────────────────
-    entry_price   : float | None  — your average cost (None = flat / no position)
-    lookback_days : int           — calendar days of history to fetch
-    timeframe     : str           — yfinance interval (1d, 1h, 15m, 5m, 1wk …)
+Portfolio source
+────────────────
+    Edit demo_portfolio.json to configure tickers, entry prices, and allocations.
+    PORTFOLIO_FILE can be overridden below or via --portfolio flag.
 
 Note on yfinance limits
 ───────────────────────
@@ -39,20 +38,13 @@ import yfinance as yf
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-#  PORTFOLIO — edit this
+#  PORTFOLIO SOURCE — edit this
 # ─────────────────────────────────────────────────────────────────────────────
 
-PORTFOLIO: Dict[str, dict] = {
-    # "TICKER": {
-    #     "entry_price":   float or None,   ← avg cost; None = not in position
-    #     "lookback_days": int,              ← days of history to fetch
-    #     "timeframe":     str,              ← yfinance interval string
-    # },
-    "AAPL":    {"entry_price": 189.50, "lookback_days": 120, "timeframe": "1d"},
-    "TSLA":    {"entry_price":   None, "lookback_days":  90, "timeframe": "1d"},
-    "NVDA":    {"entry_price": 870.00, "lookback_days":  60, "timeframe": "1d"},
-    "BTC-USD": {"entry_price":   None, "lookback_days":  90, "timeframe": "1d"},
-}
+# Portfolio JSON file.
+# Format: { "TICKER": { "entry_price", "quantity", "lookback_days",
+#                        "timeframe", "allocation_pct" }, ... }
+PORTFOLIO_FILE: Path = Path(__file__).resolve().parent / "demo_portfolio.json"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -82,11 +74,39 @@ DECISION_CONFIG: dict = {
 #  LLM CONFIG — edit or pass via CLI
 # ─────────────────────────────────────────────────────────────────────────────
 
-DEFAULT_LLM_PROVIDER = "google"   # openai | anthropic | qwen | minimax | google
+# Set True to run the fully deterministic quant pipeline with zero LLM calls.
+# Overridden at runtime by the --no-llm CLI flag.
+NO_LLM_MODE = True
+
+# When NO_LLM_MODE is True, this controls whether TA-Lib CDL candlestick
+# patterns (Engulfing, Hammer, MorningStar, EveningStar, etc.) contribute
+# to the combined signal.
+#
+#   True  → use TA-Lib CDL pattern node (default — good for day-by-day
+#            reversal detection on short timeframes like 1d / 1h)
+#   False → indicator + trend signals only; pattern weight redistributed
+#           proportionally so weights still sum to 1.0
+#
+# Has no effect when NO_LLM_MODE is False (LLM pattern agent is always used).
+USE_CDL_PATTERNS = True
+
+# Set True to save per-ticker charts after each run.
+# Output: charts/<TICKER>/pattern.png, trend.png, indicators.html
+SAVE_CHARTS = True
+CHARTS_DIR  = "charts"
+
+DEFAULT_LLM_PROVIDER = "featherless"   # openai | anthropic | qwen | minimax | google | featherless
 
 GEMINI_KEY_FILE = Path(__file__).resolve().parent.parent / "Gemini_API.txt"
-DEFAULT_GEMINI_AGENT_MODEL = "gemini-2.0-flash-lite"
-DEFAULT_GEMINI_GRAPH_MODEL = "gemini-2.0-flash-lite"
+DEFAULT_GEMINI_AGENT_MODEL = "gemini-3.1-flash-lite"
+DEFAULT_GEMINI_GRAPH_MODEL = "gemini-3.1-flash-lite"
+
+FEATHERLESS_KEY_FILE = Path(__file__).resolve().parent.parent / "Featherless_API.txt"
+# Any model from https://api.featherless.ai/v1/models — use HuggingFace model ID format.
+# Examples: "meta-llama/Llama-3.3-70B-Instruct", "Qwen/Qwen2.5-72B-Instruct",
+#           "deepseek-ai/DeepSeek-V3-0324", "mistralai/Mistral-7B-Instruct-v0.3"
+DEFAULT_FEATHERLESS_AGENT_MODEL = "meta-llama/Llama-3.3-70B-Instruct"
+DEFAULT_FEATHERLESS_GRAPH_MODEL = "meta-llama/Llama-3.3-70B-Instruct"
 
 # Max data yfinance returns per timeframe
 _YFINANCE_MAX_DAYS: Dict[str, int] = {
@@ -101,7 +121,19 @@ _YFINANCE_MAX_DAYS: Dict[str, int] = {
 # ─────────────────────────────────────────────────────────────────────────────
 
 def load_google_api_key() -> Optional[str]:
-    """Load Gemini API key from Playground/Gemini_API.txt or GOOGLE_API_KEY env var."""
+    """
+    Load Gemini API key. Priority order:
+      1. .env.keys  (key name: Gemini_API_key)
+      2. GOOGLE_API_KEY environment variable
+      3. Playground/Gemini_API.txt  (legacy flat file)
+    """
+    try:
+        from env_keys import get_key
+        val = get_key("Gemini_API_key", "GOOGLE_API_KEY")
+        if val:
+            return val
+    except ImportError:
+        pass
     if GEMINI_KEY_FILE.is_file():
         key = GEMINI_KEY_FILE.read_text(encoding="utf-8").strip()
         if key:
@@ -109,15 +141,25 @@ def load_google_api_key() -> Optional[str]:
     return os.environ.get("GOOGLE_API_KEY")
 
 
+def load_featherless_api_key() -> Optional[str]:
+    """Load Featherless API key from Playground/Featherless_API.txt or FEATHERLESS_API_KEY env var."""
+    if FEATHERLESS_KEY_FILE.is_file():
+        key = FEATHERLESS_KEY_FILE.read_text(encoding="utf-8").strip()
+        if key:
+            return key
+    return os.environ.get("FEATHERLESS_API_KEY")
+
+
 def build_llm_config(provider: str, api_key: Optional[str] = None) -> dict:
     """Build TradingGraph LLM config for the chosen provider."""
     _key_map = {
-        "openai":     "api_key",
-        "anthropic":  "anthropic_api_key",
-        "qwen":       "qwen_api_key",
-        "minimax":    "minimax_api_key",
-        "minimax_cn": "minimax_cn_api_key",
-        "google":     "google_api_key",
+        "openai":       "api_key",
+        "anthropic":    "anthropic_api_key",
+        "qwen":         "qwen_api_key",
+        "minimax":      "minimax_api_key",
+        "minimax_cn":   "minimax_cn_api_key",
+        "google":       "google_api_key",
+        "featherless":  "featherless_api_key",
     }
 
     llm_config: dict = {
@@ -132,10 +174,75 @@ def build_llm_config(provider: str, api_key: Optional[str] = None) -> dict:
         if resolved_key:
             llm_config["google_api_key"] = resolved_key
             os.environ["GOOGLE_API_KEY"] = resolved_key
+    elif provider == "featherless":
+        llm_config["agent_llm_model"] = DEFAULT_FEATHERLESS_AGENT_MODEL
+        llm_config["graph_llm_model"] = DEFAULT_FEATHERLESS_GRAPH_MODEL
+        resolved_key = api_key or load_featherless_api_key()
+        if resolved_key:
+            llm_config["featherless_api_key"] = resolved_key
+            os.environ["FEATHERLESS_API_KEY"] = resolved_key
     elif api_key:
         llm_config[_key_map.get(provider, "api_key")] = api_key
 
     return llm_config
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  PORTFOLIO LOADING
+# ─────────────────────────────────────────────────────────────────────────────
+
+def load_portfolio(portfolio_file: Path = PORTFOLIO_FILE) -> dict:
+    """
+    Load the portfolio from a JSON file.
+
+    Returns:
+        {ticker: {"entry_price", "quantity", "lookback_days",
+                  "timeframe", "allocation_pct"}}
+    """
+    with open(portfolio_file, encoding="utf-8") as fh:
+        data = json.load(fh)
+    # Strip metadata keys (leading "_")
+    return {k: v for k, v in data.items() if not k.startswith("_")}
+
+
+def build_trade_card(decision: dict, portfolio_entry: dict) -> dict:
+    """
+    Enrich a pipeline decision dict with portfolio metadata and a
+    stop-limit price.
+
+    Stop-limit convention
+    ─────────────────────
+    BUY          → stop_limit = stop_loss × 0.995  (fill guaranteed below SL)
+    SELL / SHORT → stop_limit = stop_loss × 1.005  (fill guaranteed above SL)
+    """
+    card   = dict(decision)
+    sl     = decision.get("stop_loss")    or 0.0
+    tp     = decision.get("target_price") or 0.0
+    cp     = decision.get("current_price") or 0.0
+    action = decision.get("decision", "HOLD").upper()
+
+    # Stop-limit price
+    if action == "BUY" and sl > 0:
+        card["stop_limit"] = round(sl * 0.995, 4)
+    elif action in ("SELL", "SHORT") and sl > 0:
+        card["stop_limit"] = round(sl * 1.005, 4)
+    else:
+        card["stop_limit"] = None
+
+    # % distance from current price
+    if cp > 0:
+        card["tp_pct"] = round((tp - cp) / cp * 100, 2) if tp else None
+        card["sl_pct"] = round((sl - cp) / cp * 100, 2) if sl else None
+    else:
+        card["tp_pct"] = None
+        card["sl_pct"] = None
+
+    # Portfolio metadata
+    card["quantity"]       = portfolio_entry.get("quantity",       0)
+    card["allocation_pct"] = portfolio_entry.get("allocation_pct", 0.0)
+    card["is_etf"]         = portfolio_entry.get("is_etf",         False)
+
+    return card
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -260,6 +367,38 @@ def print_signal_breakdown(decisions: List[dict]) -> None:
         )
 
 
+def _save_ticker_charts(ticker: str, kline_data: dict) -> None:
+    """Generate and save pattern, trend, and indicator charts for a ticker."""
+    import charts as _charts
+    from indicator_agent import visualize_indicator_signals, _kline_to_dataframe
+
+    out = Path(CHARTS_DIR) / ticker
+    out.mkdir(parents=True, exist_ok=True)
+
+    try:
+        _charts.generate_kline_image(kline_data, save_path=str(out / "pattern.png"))
+        print(f"  Chart: {out / 'pattern.png'}")
+    except Exception as e:
+        print(f"  [WARN] Pattern chart failed: {e}")
+
+    try:
+        _charts.generate_trend_image(kline_data, save_path=str(out / "trend.png"))
+        print(f"  Chart: {out / 'trend.png'}")
+    except Exception as e:
+        print(f"  [WARN] Trend chart failed: {e}")
+
+    try:
+        df = _kline_to_dataframe(kline_data)
+        visualize_indicator_signals(
+            df, ticker,
+            save_path=str(out / "indicators.html"),
+            show_plot=False,
+        )
+        print(f"  Chart: {out / 'indicators.html'}")
+    except Exception as e:
+        print(f"  [WARN] Indicator chart failed: {e}")
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 #  CLI
 # ─────────────────────────────────────────────────────────────────────────────
@@ -272,19 +411,43 @@ def parse_args() -> argparse.Namespace:
     p.add_argument(
         "--provider",
         default=DEFAULT_LLM_PROVIDER,
-        choices=["openai", "anthropic", "qwen", "minimax", "minimax_cn", "google"],
+        choices=["openai", "anthropic", "qwen", "minimax", "minimax_cn", "google", "featherless"],
         help="LLM provider for perception agents (pattern / trend vision analysis)",
     )
     p.add_argument("--api-key",   default=None, help="API key for the chosen provider")
+    p.add_argument(
+        "--no-llm",
+        action="store_true",
+        default=NO_LLM_MODE,
+        help="Run fully deterministic quant pipeline (zero LLM calls)",
+    )
+    p.add_argument(
+        "--llm",
+        dest="no_llm",
+        action="store_false",
+        help="Use LLM agents (overrides NO_LLM_MODE=True in config)",
+    )
     p.add_argument("--no-short",  action="store_true", help="Disable SHORT signals (long-only)")
     p.add_argument("--rr-target", type=float,   default=None, help="Risk:reward target ratio")
     p.add_argument("--atr-mult",  type=float,   default=None, help="ATR multiplier for stop-loss")
+    p.add_argument("--max-usd",   type=float,   default=None,
+                   help="API cost stop-loss: hard $ cap on LLM spend (LLM mode)")
+    p.add_argument("--max-calls", type=int,     default=None,
+                   help="API cost stop-loss: hard cap on LLM call count (LLM mode)")
     p.add_argument("--output",    default=None, help="Save JSON results to this file path")
     p.add_argument(
         "--breakdown",
         action="store_true",
         help="Print per-ticker signal breakdown after the summary table",
     )
+
+    p.add_argument(
+        "--portfolio",
+        default=None,
+        metavar="FILE",
+        help="Path to a portfolio JSON file (default: demo_portfolio.json)",
+    )
+
     return p.parse_args()
 
 
@@ -294,6 +457,10 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> List[dict]:
     args = parse_args()
+
+    # --- Load portfolio ---
+    pf_file = Path(args.portfolio) if args.portfolio else PORTFOLIO_FILE
+    portfolio = load_portfolio(pf_file)
 
     # --- Build LLM config ---
     llm_config = build_llm_config(args.provider, args.api_key)
@@ -307,33 +474,62 @@ def main() -> List[dict]:
     if args.atr_mult is not None:
         dec_cfg["atr_multiplier_sl"] = args.atr_mult
 
-    # --- Import here to avoid slow startup until we need it ---
-    from trading_graph import TradingGraph
+    # --- Pattern toggle (NO_LLM_MODE only) ---
+    # When USE_CDL_PATTERNS is False, zero out the pattern weight and
+    # redistribute it proportionally across indicator + trend so they
+    # still sum to 1.0.
+    if args.no_llm and not USE_CDL_PATTERNS:
+        _w = dict(dec_cfg.get("weights") or DECISION_CONFIG["weights"])
+        _pat_w = _w.pop("pattern", 0.0)
+        _total  = sum(_w.values()) or 1.0
+        for _k in _w:
+            _w[_k] = round(_w[_k] + _pat_w * (_w[_k] / _total), 6)
+        _w["pattern"] = 0.0
+        dec_cfg = {**dec_cfg, "weights": _w}
+
+    from graph_setup import SetGraph
+    from graph_util import TechnicalTools
 
     print("=" * 72)
     print(f"  QuantAgent Portfolio  —  {datetime.now().strftime('%Y-%m-%d %H:%M')}")
-    print(f"  Provider: {args.provider}  |  Tickers: {len(PORTFOLIO)}")
+    if args.no_llm:
+        _pat_label = "CDL patterns ON" if USE_CDL_PATTERNS else "CDL patterns OFF (indicator+trend only)"
+        print(f"  Mode: NO-LLM (fully deterministic)  |  {_pat_label}  |  Tickers: {len(portfolio)}")
+    else:
+        print(f"  Provider: {args.provider}  |  Tickers: {len(portfolio)}")
     print("=" * 72)
 
-    # Initialise TradingGraph once (shared LLM instances across tickers).
-    # ensure_initialized() raises a clear ValueError if the provider has no API
-    # key (rather than an AttributeError on a deferred/None graph_setup).
-    trading_graph = TradingGraph(config=llm_config)
-    trading_graph.ensure_initialized()
-
-    # Compile graph with the pure-math quant decision node
-    compiled_graph = trading_graph.graph_setup.set_graph_quant(
-        weights            = dec_cfg.get("weights"),
-        thresholds         = dec_cfg.get("thresholds"),
-        atr_multiplier_sl  = dec_cfg["atr_multiplier_sl"],
-        risk_reward_target = dec_cfg["risk_reward_target"],
-        allow_short        = dec_cfg["allow_short"],
-    )
+    if args.no_llm:
+        # Fully deterministic — no API key required, no LLM calls at all.
+        graph_setup = SetGraph(None, None, TechnicalTools())
+        compiled_graph = graph_setup.set_graph_full_quant(
+            weights            = dec_cfg.get("weights"),
+            thresholds         = dec_cfg.get("thresholds"),
+            atr_multiplier_sl  = dec_cfg["atr_multiplier_sl"],
+            risk_reward_target = dec_cfg["risk_reward_target"],
+            allow_short        = dec_cfg["allow_short"],
+        )
+    else:
+        # Arm the API cost stop-loss before any LLM call can happen.
+        from cost_guard import configure as _configure_guard
+        _guard = _configure_guard(max_usd=getattr(args, "max_usd", None),
+                                  max_calls=getattr(args, "max_calls", None))
+        print(f"  {_guard.banner()}")
+        from trading_graph import TradingGraph
+        trading_graph = TradingGraph(config=llm_config)
+        trading_graph.ensure_initialized()
+        compiled_graph = trading_graph.graph_setup.set_graph_quant(
+            weights            = dec_cfg.get("weights"),
+            thresholds         = dec_cfg.get("thresholds"),
+            atr_multiplier_sl  = dec_cfg["atr_multiplier_sl"],
+            risk_reward_target = dec_cfg["risk_reward_target"],
+            allow_short        = dec_cfg["allow_short"],
+        )
 
     all_results: List[dict] = []
     failed: List[str] = []
 
-    for ticker, cfg in PORTFOLIO.items():
+    for ticker, cfg in portfolio.items():
         timeframe     = cfg.get("timeframe", "1d")
         lookback_days = cfg.get("lookback_days", 90)
         entry_price   = cfg.get("entry_price")
@@ -379,8 +575,6 @@ def main() -> List[dict]:
             failed.append(ticker)
             continue
 
-        all_results.append(decision_dict)
-
         # Quick per-ticker line
         dec  = decision_dict.get("decision", "?")
         sig  = decision_dict.get("combined_signal", 0)
@@ -394,6 +588,13 @@ def main() -> List[dict]:
             f"  {_DECISION_BADGE.get(dec, dec)}  signal={sig:+.3f} [{strg}]  "
             f"price={cp:.4f}  target={tp:.4f}  SL={sl:.4f}  PnL={pnl_str}"
         )
+
+        # Build enriched trade card and collect result
+        all_results.append(build_trade_card(decision_dict, cfg))
+
+        # 5. Generate charts
+        if SAVE_CHARTS:
+            _save_ticker_charts(ticker, kline_data)
 
     # ── Summary table ──────────────────────────────────────────────────────
     if all_results:

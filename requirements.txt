@@ -37,6 +37,10 @@ requests
 ipython
 tqdm
 
+# Optional: maintained, offline LLM price map for the cost stop-loss (cost_guard.py).
+# Falls back to the built-in pricing table if absent. https://github.com/AgentOps-AI/tokencost
+# tokencost
+
 # Optional: required on systems missing a stdlib _sqlite3 build (yfinance caches via sqlite)
 pysqlite3-binary
 

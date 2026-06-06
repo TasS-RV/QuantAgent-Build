@@ -54,18 +54,11 @@
 
 A sophisticated multi-agent trading analysis system that combines technical indicators, pattern recognition, and trend analysis using LangChain and LangGraph. The system provides both a web interface and programmatic access for comprehensive market analysis.
 
-<<<<<<< HEAD
+> **About this fork (`TasS-RV/QuantAgent-Build`)** — This is a build/extension of the upstream [QuantAgent](https://github.com/Y-Research-SBU/QuantAgent) research project. On top of the original LangGraph multi-agent system, this fork adds an **AlgoEdge** pipeline: a Google Gemini–backed indicator node, a visualisation toolkit that overlays EMA + Fibonacci levels and AI-suggested buy/sell price points, a **Telegram bot**, Trading 212 portfolio integration, a deterministic backtest engine, an **API cost stop-loss**, and trading safety rails.
 
 <div align="center">
 
-🚀 [Features](#-features) | ⚡ [Installation](#-installation) | 🎬 [Usage](#-usage) | 🔧 [Implementation Details](#-implementation-details) | 🤝 [Contributing](#-contributing) | 📄 [License](#-license)
-=======
-> **About this fork (`TasS-RV/QuantAgent-Build`)** — This is a build/extension of the upstream [QuantAgent](https://github.com/Y-Research-SBU/QuantAgent) research project. On top of the original LangGraph multi-agent system, this fork adds an **AlgoEdge** pipeline: a Google Gemini–backed indicator node, a visualisation toolkit that overlays EMA + Fibonacci levels and AI-suggested buy/sell price points, and a **Telegram bot** that pushes the analysis (with the annotated chart image) straight to your phone. See [AlgoEdge Extensions](#-algoedge-extensions-this-fork) for setup.
-
-<div align="center">
-
-🚀 [Features](#-features) | 📲 [AlgoEdge Extensions](#-algoedge-extensions-this-fork) | 🧪 [Backtesting & Quant](#-backtesting--quant-pipelines) | ⚡ [Installation](#-installation) | 🎬 [Usage](#-usage) | 🔧 [Implementation Details](#-implementation-details) | 🤝 [Contributing](#-contributing) | 📄 [License](#-license)
->>>>>>> d25a181f7efa17f29ba9008ec6dd624f72b86e8c
+🚀 [Features](#-features) | 📲 [AlgoEdge Extensions](#-algoedge-extensions-this-fork) | 🧪 [Backtesting & Quant](#-backtesting--quant-pipelines) | 🛡️ [Cost & Safety](#️-cost-stop-loss--trading-safety) | ⚡ [Installation](#-installation) | 🎬 [Usage](#-usage) | 🔧 [Implementation Details](#-implementation-details)
 
 </div>
 
@@ -105,8 +98,6 @@ Modern Flask-based web application with:
   - Dynamic chart generation
   - API key management
 
-<<<<<<< HEAD
-=======
 ## 📲 AlgoEdge Extensions (this fork)
 
 This fork adds a lightweight, end-to-end alerting pipeline on top of the core agents. It is independent of the Flask web interface and is driven by **Google Gemini** rather than the LangChain providers.
@@ -119,7 +110,6 @@ A sample of the generated chart is committed at the repo root: `NVDA_AlgoEdge_An
 
 > **Setup for these features is described in the [Installation](#-installation) section below** (Gemini API key file + `telegram_keys.json`), and how to run it is under [Usage → AlgoEdge pipeline](#run-the-algoedge-pipeline).
 
->>>>>>> d25a181f7efa17f29ba9008ec6dd624f72b86e8c
 ## 📦 Installation
 
 ### 1. Create and Activate Conda Environment
@@ -165,9 +155,6 @@ export MINIMAX_API_KEY="your_minimax_api_key_here"
 
 ```
 
-<<<<<<< HEAD
-
-=======
 ### 4. Set Up AlgoEdge Credentials (for the Gemini + Telegram pipeline)
 
 The AlgoEdge pipeline reads its secrets from **one folder above the repository** so they never get committed to git. From inside the repo, that means the files live in the *parent* directory.
@@ -200,7 +187,6 @@ Your parent directory should then contain:
 ```
 
 > **Security note:** Keeping these files outside the repo keeps secrets out of version control. Do not move them inside the repo or hard-code keys into source. If you ever do place credentials inside the working tree, add them to `.gitignore` first.
->>>>>>> d25a181f7efa17f29ba9008ec6dd624f72b86e8c
 
 
 
@@ -222,8 +208,6 @@ The web application will be available at `http://127.0.0.1:5000`
 4. **Real-time Analysis**: Get comprehensive technical analysis with visualizations
 5. **API Key Management**: Update your OpenAI API key through the interface
 
-<<<<<<< HEAD
-=======
 ### Run the AlgoEdge pipeline
 
 Once the [AlgoEdge credentials](#4-set-up-algoedge-credentials-for-the-gemini--telegram-pipeline) are in place, run the indicator node directly:
@@ -359,7 +343,40 @@ Enable it on the scheduler with `--sentiment-weight 0.2`. Requires `transformers
 + `torch` (optional, commented in `requirements.txt`); if absent, the overlay is a
 no-op and decisions are unchanged.
 
->>>>>>> d25a181f7efa17f29ba9008ec6dd624f72b86e8c
+## 🛡️ Cost stop-loss & trading safety
+
+Two fail-safe systems protect credits and capital (full details in
+[`docs/COST_AND_SAFETY.md`](docs/COST_AND_SAFETY.md)):
+
+- **API cost stop-loss** (`cost_guard.py`) — a hard ceiling on LLM spend that
+  **aborts before** any call that would breach the cap. Default caps apply even
+  if unconfigured (`$5` / 2M tokens / 400 calls; override via `--max-usd` etc. or
+  `QUANT_MAX_*`). `QUANT_KILL_SWITCH=1` blocks all LLM calls. Token spend is
+  reported as **cost-drag on P&L** after every run, so you never "go green but
+  red on tokens." Prices via the offline `tokencost` map when installed.
+- **Trading safety rails** (`safety.py`) — decisions are advisory; live order
+  placement is blocked unless `QUANT_PAPER_TRADING=0` **and**
+  `QUANT_LIVE_TRADING=1` **and** the trading kill switch is off.
+
+```bash
+python backtest.py --llm --provider google --max-usd 1.0   # cap this run at $1
+QUANT_KILL_SWITCH=1 python master_portfolio.py --llm        # block all LLM calls
+```
+
+## 🎛️ Prompt tuning (issue #8 Objective 2)
+
+`prompt_library.py` holds named system-prompt variants per agent
+(momentum / mean-reversion / breakout / reversal …); `prompt_tuning.py` sweeps
+combinations under the cost stop-loss and records metrics to
+`backtesting_operations/RESULTS_LOG.md`. Hard-coded constraints
+(`constraints.py`: no-buy-if-VIX>30, breakout bias) and confidence position
+sizing round out the "let the LLM play" loop.
+
+```bash
+python prompt_tuning.py --dry-run                  # list combos, no LLM calls
+python prompt_tuning.py --symbols NVDA --max-usd 1.0
+```
+
 ## 📺 Demo
 
 ![Quick preview](assets/demo.gif)
@@ -477,11 +494,8 @@ This repository was built with the help of the following libraries and framework
 - [**LangGraph**](https://github.com/langchain-ai/langgraph)
 - [**OpenAI**](https://github.com/openai/openai-python)
 - [**Anthropic (Claude)**](https://github.com/anthropics/anthropic-sdk-python)
-<<<<<<< HEAD
-=======
 - [**Google Gemini**](https://github.com/googleapis/python-genai) — powers the AlgoEdge indicator node
 - [**Telegram Bot API**](https://core.telegram.org/bots/api) — alert delivery
->>>>>>> d25a181f7efa17f29ba9008ec6dd624f72b86e8c
 - [**Qwen**](https://github.com/QwenLM/Qwen)
 - [**MiniMax**](https://platform.minimaxi.com/) — 204K context, OpenAI-compatible API
 - [**yfinance**](https://github.com/ranaroussi/yfinance)

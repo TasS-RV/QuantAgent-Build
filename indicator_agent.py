@@ -7,10 +7,6 @@ Combines LLM qualitative analysis with rigid TA-Lib trend-following mathematics.
 import copy
 import json
 
-<<<<<<< HEAD
-from langchain_core.messages import ToolMessage, HumanMessage
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-=======
 import numpy as np
 import pandas as pd
 import talib
@@ -281,18 +277,14 @@ def visualize_indicator_signals(
         fig.write_html("indicator_chart.html")
 
     return fig
->>>>>>> d25a181f7efa17f29ba9008ec6dd624f72b86e8c
 
 
 def create_indicator_agent(llm, toolkit):
     """
     Create an indicator analysis agent node for HFT. The agent uses LLM and indicator tools to analyze OHLCV data.
     """
-<<<<<<< HEAD
-=======
     from langchain_core.messages import HumanMessage, ToolMessage
     from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
->>>>>>> d25a181f7efa17f29ba9008ec6dd624f72b86e8c
 
     def indicator_agent_node(state):
         tools = [
@@ -303,16 +295,16 @@ def create_indicator_agent(llm, toolkit):
             toolkit.compute_willr,
         ]
         time_frame = state["time_frame"]
-<<<<<<< HEAD
-        # --- System prompt for LLM ---
-=======
 
->>>>>>> d25a181f7efa17f29ba9008ec6dd624f72b86e8c
+        import prompt_library
+        _ind_persona = prompt_library.get_prompt(
+            "indicator",
+            "You are a high-frequency trading (HFT) analyst assistant operating under time-sensitive conditions.")
         prompt = ChatPromptTemplate.from_messages(
             [
                 (
                     "system",
-                    "You are a high-frequency trading (HFT) analyst assistant operating under time-sensitive conditions. "
+                    f"{_ind_persona} "
                     "You must analyze technical indicators to support fast-paced trading execution.\n\n"
                     "You have access to tools: compute_rsi, compute_macd, compute_roc, compute_stoch, and compute_willr. "
                     "Use them by providing appropriate arguments like `kline_data` and the respective periods.\n\n"
@@ -326,34 +318,17 @@ def create_indicator_agent(llm, toolkit):
         ).partial(kline_data=json.dumps(state["kline_data"], indent=2))
 
         chain = prompt | llm.bind_tools(tools)
-<<<<<<< HEAD
-        # messages = state["messages"]
-=======
->>>>>>> d25a181f7efa17f29ba9008ec6dd624f72b86e8c
         messages = state.get("messages", [])
         if not messages:
             messages = [HumanMessage(content="Begin indicator analysis.")]
 
-<<<<<<< HEAD
-
-        # --- Step 1: Ask for tool calls ---
-        ai_response = chain.invoke(messages)
-        messages.append(ai_response)
-        
-        # --- Step 2: Collect tool results ---
-=======
         ai_response = chain.invoke({"messages": messages})
         messages.append(ai_response)
 
->>>>>>> d25a181f7efa17f29ba9008ec6dd624f72b86e8c
         if hasattr(ai_response, "tool_calls") and ai_response.tool_calls:
             for call in ai_response.tool_calls:
                 tool_name = call["name"]
                 tool_args = call["args"]
-<<<<<<< HEAD
-                # Always provide kline_data
-=======
->>>>>>> d25a181f7efa17f29ba9008ec6dd624f72b86e8c
                 tool_args["kline_data"] = copy.deepcopy(state["kline_data"])
                 tool_fn = next(t for t in tools if t.name == tool_name)
                 tool_result = tool_fn.invoke(tool_args)
@@ -363,25 +338,6 @@ def create_indicator_agent(llm, toolkit):
                     )
                 )
 
-<<<<<<< HEAD
-        # --- Step 3: Re-run the chain with tool results ---
-        # Keep invoking until we get a text response (not another tool call)
-        # This is important for Claude which may make multiple tool calls
-        max_iterations = 5  # Prevent infinite loops
-        iteration = 0
-        final_response = None
-        
-        while iteration < max_iterations:
-            iteration += 1
-            final_response = chain.invoke(messages)
-            messages.append(final_response)
-            
-            # If there are no tool calls, we have the final answer
-            if not hasattr(final_response, "tool_calls") or not final_response.tool_calls:
-                break
-            
-            # If there are more tool calls, execute them
-=======
         max_iterations = 5
         iteration = 0
         final_response = None
@@ -394,7 +350,6 @@ def create_indicator_agent(llm, toolkit):
             if not hasattr(final_response, "tool_calls") or not final_response.tool_calls:
                 break
 
->>>>>>> d25a181f7efa17f29ba9008ec6dd624f72b86e8c
             for call in final_response.tool_calls:
                 tool_name = call["name"]
                 tool_args = call["args"]
@@ -407,18 +362,6 @@ def create_indicator_agent(llm, toolkit):
                     )
                 )
 
-<<<<<<< HEAD
-        # Extract content - handle both string and empty content cases
-        if final_response:
-            report_content = final_response.content
-            # If content is empty or None, try to get text from recent messages
-            if not report_content or (isinstance(report_content, str) and not report_content.strip()):
-                # Check if there's any text content in the messages (skip tool calls)
-                for msg in reversed(messages):
-                    if (hasattr(msg, 'content') and msg.content and 
-                        isinstance(msg.content, str) and msg.content.strip() and 
-                        not hasattr(msg, 'tool_calls')):
-=======
         if final_response:
             report_content = final_response.content
             if not report_content or (isinstance(report_content, str) and not report_content.strip()):
@@ -430,17 +373,10 @@ def create_indicator_agent(llm, toolkit):
                         and msg.content.strip()
                         and not hasattr(msg, "tool_calls")
                     ):
->>>>>>> d25a181f7efa17f29ba9008ec6dd624f72b86e8c
                         report_content = msg.content
                         break
         else:
             report_content = "Indicator analysis completed, but no detailed report was generated."
-<<<<<<< HEAD
-
-        return {
-            "messages": messages,
-            "indicator_report": report_content if report_content else "Indicator analysis completed.",
-=======
 
         kline_data = state.get("kline_data", {})
         math_metrics = {"error": "Quantitative evaluation failed"}
@@ -461,7 +397,6 @@ def create_indicator_agent(llm, toolkit):
         return {
             "messages": messages,
             "indicator_report": combined_report,
->>>>>>> d25a181f7efa17f29ba9008ec6dd624f72b86e8c
         }
 
     return indicator_agent_node

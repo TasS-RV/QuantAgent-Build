@@ -24,7 +24,7 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from typing import Callable, List, Optional
 
-from decision_agent_quant import DEFAULT_THRESHOLDS, TradeDecision
+from quant_pipeline.decision_agent_quant import DEFAULT_THRESHOLDS, TradeDecision
 
 MODEL_NAME = "ProsusAI/finbert"
 

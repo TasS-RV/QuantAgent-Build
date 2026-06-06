@@ -140,10 +140,12 @@ def create_pattern_agent(tool_llm, graph_llm, toolkit):
             ):
                 raise ValueError("HumanMessage content is empty")
 
+            import prompt_library
+            _pat_persona = prompt_library.get_prompt(
+                "pattern", "You are a trading pattern recognition assistant")
             vision_messages = [
                 SystemMessage(
-                    content="You are a trading pattern recognition assistant "
-                    "tasked with analyzing candlestick charts."
+                    content=f"{_pat_persona} tasked with analyzing candlestick charts."
                 ),
                 human_msg,
             ]

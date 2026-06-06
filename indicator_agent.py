@@ -296,11 +296,15 @@ def create_indicator_agent(llm, toolkit):
         ]
         time_frame = state["time_frame"]
 
+        import prompt_library
+        _ind_persona = prompt_library.get_prompt(
+            "indicator",
+            "You are a high-frequency trading (HFT) analyst assistant operating under time-sensitive conditions.")
         prompt = ChatPromptTemplate.from_messages(
             [
                 (
                     "system",
-                    "You are a high-frequency trading (HFT) analyst assistant operating under time-sensitive conditions. "
+                    f"{_ind_persona} "
                     "You must analyze technical indicators to support fast-paced trading execution.\n\n"
                     "You have access to tools: compute_rsi, compute_macd, compute_roc, compute_stoch, and compute_willr. "
                     "Use them by providing appropriate arguments like `kline_data` and the respective periods.\n\n"

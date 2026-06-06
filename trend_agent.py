@@ -120,8 +120,12 @@ def create_trend_agent(tool_llm, graph_llm, toolkit):
         if not trend_image_b64:
             print("No precomputed trend image found in state, generating with tool...")
 
+            import prompt_library
+            _trend_persona = prompt_library.get_prompt(
+                "trend",
+                "You are a K-line trend pattern recognition assistant operating in a high-frequency trading context.")
             system_prompt = (
-                "You are a K-line trend pattern recognition assistant operating in a high-frequency trading context. "
+                f"{_trend_persona} "
                 "You must first call the tool `generate_trend_image` using the provided `kline_data`. "
                 "Once the chart is generated, analyze the image for support/resistance trendlines and known candlestick patterns. "
                 "Only then should you proceed to make a prediction about the short-term trend (upward, downward, or sideways). "

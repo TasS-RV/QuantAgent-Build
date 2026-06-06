@@ -20,6 +20,7 @@ trading212_key.txt
 
 # Backtest outputs
 backtest_results/
+strategy_results/
 backtest_smoke/
 backtest_results.log
 *.cache

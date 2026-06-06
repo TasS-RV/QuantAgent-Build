@@ -84,8 +84,9 @@ class SimTrade:
     holding_days: int
     gross_pnl_pct: float       # signed return before costs (per unit notional)
     cost_pct: float            # total round-trip cost as a fraction
-    position_size: float       # exposure fraction applied (1.0 = all-in)
     pnl_pct: float             # net signed return on portfolio (size-weighted)
+    position_size: float = 1.0  # exposure fraction (1.0=all-in); default keeps
+                                # older constructors (e.g. strategy_lab) working
     note: str = ""
 
 

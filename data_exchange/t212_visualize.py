@@ -211,21 +211,21 @@ def render_portfolio(
     ax_bar.invert_yaxis()
     ax_bar.set_title("Return vs Entry Price", color=_C["muted"], fontsize=10, pad=8)
 
+    # Extend right axis first so label offset is based on final range
+    xlim = ax_bar.get_xlim()
+    ax_bar.set_xlim(xlim[0], max(xlim[1], 2) * 1.6)
+
+    # All labels pinned just right of the zero line — never overlaps y-ticks
+    x_offset = (ax_bar.get_xlim()[1] - ax_bar.get_xlim()[0]) * 0.015
     for bar, pct, ppl in zip(bars, pct_chgs, ppls):
         sign  = "+" if pct >= 0 else ""
         psign = "+" if ppl >= 0 else ""
-        label = f"  {sign}{pct:.1f}%  ({psign}{ppl:,.0f})"
-        x  = bar.get_width()
-        ha = "left" if x >= 0 else "right"
+        label = f"{sign}{pct:.1f}%  ({psign}{ppl:,.0f})"
         ax_bar.text(
-            x, bar.get_y() + bar.get_height() / 2,
-            label, va="center", ha=ha,
+            x_offset, bar.get_y() + bar.get_height() / 2,
+            label, va="center", ha="left",
             color=_C["text"], fontsize=8,
         )
-
-    # Extend x-axis so labels don't get clipped
-    xlim = ax_bar.get_xlim()
-    ax_bar.set_xlim(xlim[0] * 1.25, xlim[1] * 1.5 if xlim[1] > 0 else xlim[1])
 
     # ── Position detail table ─────────────────────────────────────────────────
     ax_tbl.set_facecolor(_C["panel"])
@@ -248,8 +248,9 @@ def render_portfolio(
         xmin=0.0, xmax=1.0,
     )
 
-    row_y   = 0.62
-    row_gap = 0.28
+    row_y   = 0.65
+    # Compress row spacing so up to 8 positions fit; minimum 0.09 per row
+    row_gap = max(0.09, 0.62 / max(n_pos, 1))
 
     for i, pos in enumerate(positions):
         y = row_y - i * row_gap
